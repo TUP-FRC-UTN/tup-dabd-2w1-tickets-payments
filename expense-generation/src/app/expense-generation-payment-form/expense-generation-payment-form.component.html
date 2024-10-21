@@ -32,40 +32,6 @@
               <div class="line"></div>
             </div>
 
-
-
-            <!-- @if(paymentStatusMessage){ -->
-            <!-- Modal -->
-            <!-- <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
-              aria-labelledby="staticBackdropLabel" aria-hidden="true">
-              <div class="modal-dialog">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="staticBackdropLabel">Pago realizado !!</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
-                  <div class="modal-body">
-                    Descargue su comprobante de pago
-                    <button class="btn mx-5 btn-outline-success w-100" (click)="openPdf()" >PDF     <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-download"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg></button>
-
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" (click)="goBack()">Continuar</button>
-                  </div>
-                </div>
-              </div>
-            </div> -->
-
-            <!-- } -->
-
-
-            <div *ngIf="error" class="alert alert-danger mt-3">{{ error }}</div>
-  
-              <div *ngIf="paymentStatusMessage" class="alert mt-3" [ngClass]="{'alert-success': paymentSuccessful, 'alert-danger': !paymentSuccessful}" role="alert">
-                {{ paymentStatusMessage }}          <button class="btn mx-5 btn-outline-success" (click)="openPdf()" >PDF     <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-download"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg></button>
-  
-              </div>
-
             <div class="row mt-5">
               <div class="col-12 col-md-3">
                 <button type="button" class="btn w-100 btn-outline-secondary mt-3" (click)="goBack()">Volver</button>

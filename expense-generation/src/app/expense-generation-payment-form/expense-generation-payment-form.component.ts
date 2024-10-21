@@ -173,7 +173,11 @@ export class ExpenseGenerationPaymentFormComponent implements OnInit {
 
     } catch (err: any) {
       console.error("Error en el proceso de pago:", err);
-      this.error = err.message || "Error al procesar el pago";
+      Swal.fire({
+        icon: "error",
+        title: "Error...",
+        text:this.error = err.message || "Error al procesar el pago",
+      });
     } finally {
       this.processing = false;
     }
