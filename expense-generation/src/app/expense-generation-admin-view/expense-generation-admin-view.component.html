@@ -1,1 +1,167 @@
-<p>expense-generation-admin-view works!</p>
+<div class="container-fluid" style="padding-top: 5%">
+  <div class="row">
+    <!-- Filters -->
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-body">
+          <form (ngSubmit)="buscar()" #filterForm="ngForm">
+            <!-- Property -->
+            <div class="mb-3">
+              <label for="propietario" class="form-label"
+                >ID del Propietario</label
+              >
+              <input
+                type="number"
+                class="form-control"
+                id="propietario"
+                [(ngModel)]="ownerId"
+                name="ownerId"
+                (ngModelChange)="onOwnerIdChange()"
+                required
+                placeholder="Ingrese ID del propietario"
+              />
+              <!-- Error Message -->
+              <div
+                *ngIf="filterForm.submitted && !ownerId"
+                class="text-danger mt-2"
+              >
+                El ID del propietario es obligatorio.
+              </div>
+            </div>
+
+            <!-- Status -->
+            <div class="mb-3">
+              <label for="estado" class="form-label">Estado</label>
+              <select
+                class="form-control"
+                id="estado"
+                [(ngModel)]="filtros.estado"
+                name="estado"
+                [disabled]="!ownerId"
+                (ngModelChange)="buscar()"
+              >
+                <option value="">Seleccione</option>
+                <option *ngFor="let estado of estados" [value]="estado">
+                  {{ estado }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Date Since, TO -->
+            <div class="row mb-3">
+              <div class="col">
+                <label for="fechaDesde" class="form-label">Fecha Desde</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  id="fechaDesde"
+                  [(ngModel)]="filtros.desde"
+                  name="desde"
+                  [disabled]="!ownerId"
+                  (ngModelChange)="buscar()"
+                />
+              </div>
+              <div class="col">
+                <label for="fechaHasta" class="form-label">Fecha Hasta</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  id="fechaHasta"
+                  [(ngModel)]="filtros.hasta"
+                  name="hasta"
+                  [disabled]="!ownerId"
+                  (ngModelChange)="buscar()"
+                />
+              </div>
+            </div>
+
+            <!-- Min Amount -->
+            <div class="mb-3">
+              <label for="montoMinimo" class="form-label">Monto Mínimo</label>
+              <input
+                type="number"
+                class="form-control"
+                id="montoMinimo"
+                [(ngModel)]="filtros.montoMinimo"
+                name="montoMinimo"
+                [disabled]="!ownerId"
+                (ngModelChange)="buscar()"
+              />
+            </div>
+
+            <!-- Clean -->
+            <div class="d-grid gap-2">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                (click)="limpiarFiltros()"
+              >
+                Limpiar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- List -->
+    <div class="col-md-6">
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="text-center my-4">
+        <div class="spinner-border text-success" role="status">
+          <span class="visually-hidden">Cargando...</span>
+        </div>
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="error" class="alert alert-danger" role="alert">
+        {{ error }}
+      </div>
+
+      <!-- Results Table -->
+      <div class="card" *ngIf="!isLoading && expenses.length > 0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Periodo</th>
+                <th>Propietario</th>
+                <th>Fecha Emisión</th>
+                <th>Estado</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let expense of expenses">
+                <td>{{ expense.period }}</td>
+                <td>{{ expense.ownerId }}</td>
+                <td>{{ formatDate(expense.issueDate) }}</td>
+                <td>
+                  <span [class]="getStatusBadgeClass(expense.status)">
+                    {{ expense.status }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <button
+                    class="btn btn-light btn-sm"
+                    (click)="verDetalles(expense)"
+                  >
+                    Más info
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- No Results Message -->
+      <div
+        *ngIf="!isLoading && !error && expenses.length === 0"
+        class="alert alert-info text-center"
+      >
+        No se encontraron resultados
+      </div>
+    </div>
+  </div>
+</div>
