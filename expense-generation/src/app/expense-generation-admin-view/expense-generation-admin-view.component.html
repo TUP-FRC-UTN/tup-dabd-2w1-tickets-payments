@@ -1,102 +1,173 @@
-<div class="container-fluid" style="padding-top: 5%">
-  <div class="row">
-    <!-- Filters -->
-    <div class="col-md-6">
-      <div class="card mb-4">
+<div class="container-fluid py-4 bg-light min-vh-100">
+  <div class="row g-4">
+    <!-- Filters Section -->
+    <div class="col-lg-3" *ngIf="showFilters">
+      <div class="card shadow-sm">
+        <div class="card-header bg-white border-bottom">
+          <h4 class="mb-0">Filtros de Búsqueda</h4>
+        </div>
         <div class="card-body">
-          <form (ngSubmit)="buscar()" #filterForm="ngForm">
-            <!-- Property -->
+          <form (ngSubmit)="buscarBoletas()" #filterForm="ngForm">
+            <!-- Search Type Selector -->
             <div class="mb-3">
-              <label for="propietario" class="form-label"
-                >ID del Propietario</label
-              >
-              <input
-                type="number"
-                class="form-control"
-                id="propietario"
-                [(ngModel)]="ownerId"
-                name="ownerId"
-                (ngModelChange)="onOwnerIdChange()"
-                required
-                placeholder="Ingrese ID del propietario"
-              />
-              <!-- Error Message -->
-              <div
-                *ngIf="filterForm.submitted && !ownerId"
-                class="text-danger mt-2"
-              >
-                El ID del propietario es obligatorio.
+              <label class="form-label fw-semibold">Buscar por</label>
+              <div class="btn-group w-100">
+                <button
+                  type="button"
+                  class="btn"
+                  [class.btn-primary]="searchType === 'name'"
+                  [class.btn-outline-primary]="searchType !== 'name'"
+                  (click)="searchType = 'name'"
+                >
+                  Nombre
+                </button>
+                <button
+                  type="button"
+                  class="btn"
+                  [class.btn-primary]="searchType === 'dni'"
+                  [class.btn-outline-primary]="searchType !== 'dni'"
+                  (click)="searchType = 'dni'"
+                >
+                  DNI
+                </button>
+                <button
+                  type="button"
+                  class="btn"
+                  [class.btn-primary]="searchType === 'plot'"
+                  [class.btn-outline-primary]="searchType !== 'plot'"
+                  (click)="searchType = 'plot'"
+                >
+                  Lote
+                </button>
               </div>
+            </div>
+
+            <!-- Search Input -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">{{
+                searchType === "plot"
+                  ? "Número de Lote"
+                  : searchType === "dni"
+                  ? "DNI"
+                  : "Nombre y Apellido"
+              }}</label>
+              <div class="input-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="searchTerm"
+                  name="searchTerm"
+                  [placeholder]="
+                    searchType === 'plot'
+                      ? 'Ingrese número de lote'
+                      : searchType === 'dni'
+                      ? 'Ingrese DNI'
+                      : 'Ingrese nombre'
+                  "
+                  (ngModelChange)="buscarUsuarios()"
+                />
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  (click)="searchTerm = ''"
+                >
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Filtered Users List -->
+            <div
+              class="list-group mb-3"
+              *ngIf="filteredUsers.length > 0 && searchType !== 'plot'"
+            >
+              <button
+                type="button"
+                class="list-group-item list-group-item-action"
+                *ngFor="let owner of filteredUsers"
+                (click)="seleccionarUsuario(owner)"
+              >
+                {{ owner.name }} {{ owner.lastname }} - DNI: {{ owner.dni }}
+                <small
+                  class="d-block text-muted"
+                  *ngIf="owner.plots && owner.plots.length > 0"
+                >
+                  Lotes: {{ getPlotNumbers(owner) }}
+                </small>
+              </button>
             </div>
 
             <!-- Status -->
             <div class="mb-3">
-              <label for="estado" class="form-label">Estado</label>
+              <label for="estado" class="form-label fw-semibold">Estado</label>
               <select
-                class="form-control"
+                class="form-select"
                 id="estado"
                 [(ngModel)]="filtros.estado"
                 name="estado"
-                [disabled]="!ownerId"
-                (ngModelChange)="buscar()"
+                (ngModelChange)="buscarBoletas()"
               >
-                <option value="">Seleccione</option>
+                <option value="">Todos</option>
                 <option *ngFor="let estado of estados" [value]="estado">
                   {{ estado }}
                 </option>
               </select>
             </div>
 
-            <!-- Date Since, TO -->
+            <!-- Date Range -->
             <div class="row mb-3">
-              <div class="col">
-                <label for="fechaDesde" class="form-label">Fecha Desde</label>
+              <div class="col-6">
+                <label for="fechaDesde" class="form-label fw-semibold"
+                  >Fecha Desde</label
+                >
                 <input
                   type="date"
                   class="form-control"
                   id="fechaDesde"
                   [(ngModel)]="filtros.desde"
                   name="desde"
-                  [disabled]="!ownerId"
-                  (ngModelChange)="buscar()"
+                  (ngModelChange)="buscarBoletas()"
                 />
               </div>
-              <div class="col">
-                <label for="fechaHasta" class="form-label">Fecha Hasta</label>
+              <div class="col-6">
+                <label for="fechaHasta" class="form-label fw-semibold"
+                  >Fecha Hasta</label
+                >
                 <input
                   type="date"
                   class="form-control"
                   id="fechaHasta"
                   [(ngModel)]="filtros.hasta"
                   name="hasta"
-                  [disabled]="!ownerId"
-                  (ngModelChange)="buscar()"
+                  (ngModelChange)="buscarBoletas()"
                 />
               </div>
             </div>
 
             <!-- Min Amount -->
             <div class="mb-3">
-              <label for="montoMinimo" class="form-label">Monto Mínimo</label>
+              <label for="montoMinimo" class="form-label fw-semibold"
+                >Monto Mínimo</label
+              >
               <input
                 type="number"
                 class="form-control"
                 id="montoMinimo"
                 [(ngModel)]="filtros.montoMinimo"
                 name="montoMinimo"
-                [disabled]="!ownerId"
-                (ngModelChange)="buscar()"
+                (ngModelChange)="buscarBoletas()"
               />
             </div>
 
-            <!-- Clean -->
-            <div class="d-grid gap-2">
+            <!-- Clean Button -->
+            <div class="d-flex justify-content-end">
               <button
                 type="button"
-                class="btn btn-secondary"
+                class="btn btn-secondary rounded-circle p-2"
                 (click)="limpiarFiltros()"
+                title="Limpiar filtros"
               >
-                Limpiar
+                <i class="bi bi-trash"></i>
               </button>
             </div>
           </form>
@@ -104,11 +175,28 @@
       </div>
     </div>
 
-    <!-- List -->
-    <div class="col-md-6">
+    <!-- Results Section -->
+    <div class="col-lg" [class.col-lg-12]="!showFilters">
+      <!-- Toggle Filters Button -->
+      <div class="d-flex justify-content-end mb-3">
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2"
+          (click)="toggleFilters()"
+        >
+          <i
+            class="bi"
+            [ngClass]="{
+              'bi-funnel-fill': !showFilters,
+              'bi-x-lg': showFilters
+            }"
+          ></i>
+          {{ showFilters ? "Ocultar Filtros" : "Activar Filtros" }}
+        </button>
+      </div>
+
       <!-- Loading State -->
       <div *ngIf="isLoading" class="text-center my-4">
-        <div class="spinner-border text-success" role="status">
+        <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Cargando...</span>
         </div>
       </div>
@@ -119,25 +207,44 @@
       </div>
 
       <!-- Results Table -->
-      <div class="card" *ngIf="!isLoading && expenses.length > 0">
+      <div class="card shadow-sm" *ngIf="!isLoading && expenses.length > 0">
         <div class="table-responsive">
           <table class="table table-hover mb-0">
             <thead class="table-light">
               <tr>
-                <th>Periodo</th>
+                <th class="text-nowrap">Periodo</th>
                 <th>Propietario</th>
-                <th>Fecha Emisión</th>
+                <th class="text-nowrap">Monto Primer Pago</th>
+                <th class="text-nowrap">Monto Segundo Pago</th>
+                <th class="text-nowrap">Monto Pagado</th>
                 <th>Estado</th>
                 <th class="text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let expense of expenses">
-                <td>{{ expense.period }}</td>
-                <td>{{ expense.ownerId }}</td>
-                <td>{{ formatDate(expense.issueDate) }}</td>
+                <td class="text-nowrap font-monospace text-end">
+                  {{ expense.period }}
+                </td>
+                <td>{{ getOwnerName(expense.ownerId) }}</td>
+                <td class="text-nowrap font-monospace text-end">
+                  $ {{ expense.first_expiration_amount | number : "1.2-2" }}
+                </td>
+                <td class="text-nowrap font-monospace text-end">
+                  $ {{ expense.second_expiration_amount | number : "1.2-2" }}
+                </td>
+                <td class="text-nowrap font-monospace text-end">
+                  $ {{ expense.first_expiration_amount | number : "1.2-2" }}
+                </td>
                 <td>
-                  <span [class]="getStatusBadgeClass(expense.status)">
+                  <span
+                    class="badge rounded-pill"
+                    [ngClass]="{
+                      'text-bg-warning': expense.status === 'Pendiente',
+                      'text-bg-success': expense.status === 'Pago',
+                      'text-bg-danger': expense.status === 'Vencido'
+                    }"
+                  >
                     {{ expense.status }}
                   </span>
                 </td>
