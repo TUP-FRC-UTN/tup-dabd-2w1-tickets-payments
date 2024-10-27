@@ -7,12 +7,14 @@ import { Router } from '@angular/router';
   standalone: true,
   imports: [ExpenseGenerationAdminViewComponent],
   templateUrl: './expense-generation-header.component.html',
-  styleUrl: './expense-generation-header.component.css',
+  styleUrl: './expense-generation-header.component.css'
 })
 export class ExpenseGenerationHeaderComponent {
+
   constructor(private router: Router) {}
 
   ChangeAdminView() {
     this.router.navigate(['/expense-generation-admin-view']);
   }
+
 }

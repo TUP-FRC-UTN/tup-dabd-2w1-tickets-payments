@@ -4,15 +4,12 @@ import { ExpenseGenerationAdminViewComponent } from './expense-generation-admin-
 import { ExpenseGenerationViewComponent } from './expense-generation-view/expense-generation-view.component';
 
 export const routes: Routes = [
-  { path: '', component: ExpenseGenerationViewComponent },
-  {
-    path: 'expense-generation-admin-view',
-    component: ExpenseGenerationAdminViewComponent,
-  },
-];
-
-@NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule],
-})
-export class AppRoutingModule {}
+    { path: '', component: ExpenseGenerationViewComponent },
+    { path: 'expense-generation-admin-view', component: ExpenseGenerationAdminViewComponent },
+  ];
+  
+  @NgModule({
+    imports: [RouterModule.forRoot(routes)],
+    exports: [RouterModule]
+  })
+  export class AppRoutingModule {}

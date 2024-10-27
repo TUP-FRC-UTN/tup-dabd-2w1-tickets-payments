@@ -54,6 +54,11 @@ createPaymentRequest(paymentData: any): Observable<string> {
   );
 }
 
+
+checkPaymentStatus(paymentId: string): Observable<any> {
+  return this.http.get(`${this.MercadoPagoIntento}/payment-status/${paymentId}`);
+}
+
 initMercadoPago(): void {
   const script = document.createElement('script');
   script.src = "https://sdk.mercadopago.com/js/v2";
