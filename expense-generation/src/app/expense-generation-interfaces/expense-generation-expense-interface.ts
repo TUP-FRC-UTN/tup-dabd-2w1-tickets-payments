@@ -1,11 +1,11 @@
 export interface ExpenseGenerationExpenseInterface {
 
     id: number;
-    owner_id : number;
+    owner_id: number;
     period: string;
     issueDate: Date;
     status: string;
-    uuid: number;
+    uuid: string;
     first_expiration_date: string;
     first_expiration_amount: number;
     second_expiration_date: string;
@@ -17,7 +17,7 @@ export interface ExpenseGenerationExpenseInterface {
     payment_id: string;
     selected?: boolean;
     paymentDate?: Date;
-    
+
 
 
 }
