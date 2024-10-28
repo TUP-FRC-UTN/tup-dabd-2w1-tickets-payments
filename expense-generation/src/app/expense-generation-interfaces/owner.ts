@@ -3,11 +3,12 @@ export interface Owner {
   name: string;
   lastname: string;
   dni: number;
+
+  active?: boolean;
   plots?: Plot[];
   username?: string;
   email?: string;
   contactId?: number;
-  active?: boolean;
   avatarUrl?: string;
   dateOfBirth?: string;
   roles?: string[];
@@ -17,10 +18,11 @@ export interface Owner {
 
 interface Plot {
   id: number;
-  plotNumber: number;
-  blockNumber: number;
-  totalAreaInM2: number;
-  builtAreaInM2: number;
-  plotState: string;
-  plotType: string;
+  plot_number: number;
+  block_number: number;
+  total_area_in_m2: number;
+  built_area_in_m2: number;
+  plot_state: string;
+  plot_type: string;
+  files : null;
 }

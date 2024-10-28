@@ -5,6 +5,7 @@ export interface ExpenseGenerationExpenseInterface {
     period: string;
     issueDate: Date;
     status: string;
+    uuid: number;
     first_expiration_date: string;
     first_expiration_amount: number;
     second_expiration_date: string;
@@ -15,8 +16,8 @@ export interface ExpenseGenerationExpenseInterface {
     payment_platform: string;
     payment_id: string;
     selected?: boolean;
-    paymentDate?: Date; 
-    //status tipe : Pago, Pendiente, Exceptuado pero el exceptuado no lo uso
+    paymentDate?: Date;
+    
 
 
 }
