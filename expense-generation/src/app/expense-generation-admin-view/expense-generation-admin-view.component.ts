@@ -214,38 +214,10 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
   }
 
   ngAfterViewInit() {
-    this.initializeModals();
+    // Inicializar las referencias a los modales
+    this.detallesModal = new window.bootstrap.Modal(document.getElementById('detallesModal'));
+    this.observationModal = new window.bootstrap.Modal(document.getElementById('observationModalExpenses'));
   }
-
-  private initializeModals() {
-    const detallesElement = document.getElementById('detallesModal');
-    const observationElement = document.getElementById('observationModalExpenses');
-    
-    if (detallesElement && observationElement) {
-      this.detallesModal = new window.bootstrap.Modal(detallesElement, {
-        backdrop: true
-      });
-      
-      this.observationModal = new window.bootstrap.Modal(observationElement, {
-        backdrop: false // Importante: desactivamos el backdrop para el modal de observación
-      });
-
-      // Limpiar observación cuando se cierra el modal
-      observationElement.addEventListener('hidden.bs.modal', () => {
-        this.observation = '';
-      });
-
-      // Limpiar todo cuando se cierra el modal de detalles
-      detallesElement.addEventListener('hidden.bs.modal', () => {
-        if (this.observationModal) {
-          this.observationModal.hide();
-        }
-        this.observation = '';
-      });
-    }
-  }
-
-  
 
   openObservationModal() {
     const modalElement = document.getElementById('observationModalExpenses');
@@ -257,37 +229,26 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
     }
   }
 
-
-  closeObservationModal() {
-    this.observationModal.hide();
-  }
-
   saveChangesExpenses() {
-    if (!this.selectedExpense || !this.observation?.trim()) return;
+    if (!this.selectedExpense || !this.observation.trim()) return;
 
     const updateDTO = {
       id: this.updatedExpense.id,
       status: this.updatedExpense.status,
       expiration_multiplier: this.updatedExpense.expiration_multiplier,
       first_expiration_date: this.updatedExpense.first_expiration_date,
-      second_expiration_date: this.updatedExpense.second_expiration_date,
-      second_expiration_amount: this.updatedExpense.second_expiration_amount
+      second_expiration_date: this.updatedExpense.second_expiration_date
     };
 
     this.expenseService.updateExpense(updateDTO, this.observation).subscribe({
       next: () => {
-        // Cerrar ambos modales
-        this.closeObservationModal();
-        this.detallesModal.hide();
-        
-        // Mostrar mensaje de éxito
         Swal.fire({
           icon: 'success',
           title: 'Éxito',
           text: 'Los cambios se guardaron correctamente'
         });
-        
-        // Refrescar la lista
+        this.observationModal.hide();
+        this.detallesModal.hide();
         this.refreshExpensesList();
       },
       error: (error) => {

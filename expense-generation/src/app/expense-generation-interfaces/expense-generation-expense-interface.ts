@@ -5,7 +5,7 @@ export interface ExpenseGenerationExpenseInterface {
     period: string;
     issueDate: Date;
     status: string;
-    uuid: number;
+    uuid: string;
     first_expiration_date: string;
     first_expiration_amount: number;
     second_expiration_date: string;

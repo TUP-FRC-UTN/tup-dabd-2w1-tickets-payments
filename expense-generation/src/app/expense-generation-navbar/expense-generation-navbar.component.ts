@@ -2,11 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { ExpenseGenerationUserSideButtonComponent } from "../expense-generation-user-side-button/expense-generation-user-side-button.component";
 import { Router } from '@angular/router';
 import { SideButton } from '../expense-generation-interfaces/expense-generation-sidebutton';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-expense-generation-navbar',
   standalone: true,
-  imports: [ExpenseGenerationUserSideButtonComponent],
+  imports: [ExpenseGenerationUserSideButtonComponent, FormsModule],
   templateUrl: './expense-generation-navbar.component.html',
   styleUrl: './expense-generation-navbar.component.css'
 })
@@ -20,10 +21,11 @@ export class ExpenseGenerationNavbarComponent {
   // private readonly authService = inject(AuthService);
 
   // userRoles: string[] =  this.authService.getUser().roles!; 
-  userRoles: string[] = ["Admin", "Owner"]
+  userRoles: string[] = ["FinanceManager", "Owner"] 
+  // , "Accountant"]
 
   //Traer con el authService
-  actualRole : string = "Admin"
+  actualRole : string = "FinanceManager"
   //Lista de botones
   buttonsList: SideButton[] = [];
 
@@ -43,15 +45,22 @@ export class ExpenseGenerationNavbarComponent {
         icon: "bi-wallet",
         title: "Mis boletas",
         route: "expense-generation-user-view",
-        roles: ["Admin"],
+        roles: ["Owner"],
       },
       {
         icon: "bi-person-lines-fill",
         title: "Lista de boletas",
         route: "expense-generation-admin-view",
-        roles: ["Admin"],
+        roles: ["FinanceManager"],
       
       },
+      // {
+      //   icon: "bi-bar-chart-line",
+      //   title: "Informes Financieros",
+      //   route: "expense-generation-user-view",
+      //   roles: ["Accountant"],
+      // },
+      
 
       // { path: 'expense-generation-admin-view', component: ExpenseGenerationAdminViewComponent },
       // {path: 'expense-generation-user-view', component: ExpenseGenerationUserViewComponent},
@@ -81,5 +90,12 @@ export class ExpenseGenerationNavbarComponent {
 
   selectRole(role : string){
     this.actualRole = role;
+    if(role === "FinanceManager"){
+      this.router.navigate(['/expense-generation-admin-view']);
+    }else{
+      this.router.navigate(['/expense-generation-user-view']);
+    }
   }
+
+
 }

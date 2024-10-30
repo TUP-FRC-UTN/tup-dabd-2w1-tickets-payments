@@ -12,9 +12,9 @@
             <div class="btn-group dropend">
                 <button type="button" class="btn bi-person-fill-gear text-light fs-4"
                     data-bs-toggle="dropdown" title="Vista actual">{{actualRole}}</button>
-                <ul class="dropdown-menu">
+                <ul class="dropdown-menu" id="dropdown">
                     @for (role of userRoles; track $index) {
-                    <li><a class="dropdown-item" (click)="selectRole(role)">{{role}}</a></li>
+                    <li><a class="dropdown-item" (click)="selectRole(role)" >{{role}}</a></li>
                     }
                 </ul>
             </div>
