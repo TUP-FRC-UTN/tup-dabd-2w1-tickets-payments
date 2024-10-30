@@ -1,1 +1,2 @@
-export interface ExpenseGenerationPayment {}
+export interface ExpenseGenerationPayment {
+}
