@@ -91,6 +91,339 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
 
   maxDate: string = new Date().toISOString().split('T')[0];
 
+
+  loadConfiguration() {
+    this.isLoadingMultipliers = true;
+    this.multiplierError = null;
+
+    forkJoin({
+      multipliers: this.expenseService.getMultipliers(),
+      generationDay: this.expenseService.getGenerationDay()
+    }).subscribe({
+      next: (data) => {
+        // Guardar valores originales
+        this.originalLatePayment = data.multipliers.latePayment;
+        this.originalExpiration = data.multipliers.expiration;
+        this.originalGenerationDay = data.generationDay;
+
+        // Establecer valores actuales en porcentaje
+        this.latePaymentPercentage = this.originalLatePayment * 100;
+        this.expirationPercentage = this.originalExpiration * 100;
+        this.generationDay = data.generationDay;
+
+        this.isLoadingMultipliers = false;
+      },
+      error: (error) => {
+        console.error('Error loading configuration:', error);
+        this.multiplierError = 'Error al cargar la configuración';
+        this.isLoadingMultipliers = false;
+      }
+    });
+  }
+
+  
+
+  isValidGenerationDay(): boolean {
+    return this.generationDay >= 1 && this.generationDay <= 28;
+  }
+
+  hasChangesExpense(): boolean {
+    if (!this.selectedExpense) return false;
+    
+    return (
+      this.updatedExpense.status !== this.selectedExpense.status ||
+      this.updatedExpense.first_expiration_date !== this.selectedExpense.first_expiration_date ||
+      this.updatedExpense.second_expiration_date !== this.selectedExpense.second_expiration_date ||
+      this.updatedExpense.second_expiration_amount !== this.selectedExpense.second_expiration_amount
+    );
+  }
+
+  getChangeSummaryExpenses(): string[] {
+    const changes: string[] = [];
+    if (!this.selectedExpense) return changes;
+
+    if (this.updatedExpense.status !== this.selectedExpense.status) {
+      changes.push(`Estado: ${this.selectedExpense.status} → ${this.updatedExpense.status}`);
+    }
+    if (this.updatedExpense.first_expiration_date !== this.selectedExpense.first_expiration_date) {
+      changes.push('Cambio en la primera fecha de vencimiento');
+    }
+    if (this.updatedExpense.second_expiration_date !== this.selectedExpense.second_expiration_date) {
+      changes.push('Cambio en la segunda fecha de vencimiento');
+    }
+    if (this.updatedExpense.second_expiration_amount !== this.selectedExpense.second_expiration_amount) {
+      changes.push(`Monto 2do vencimiento: $${this.selectedExpense.second_expiration_amount} → $${this.updatedExpense.second_expiration_amount}`);
+    }
+    return changes;
+  }
+
+  ngAfterViewInit() {
+    // Inicializar las referencias a los modales
+    this.detallesModal = new window.bootstrap.Modal(document.getElementById('detallesModal'));
+    this.observationModal = new window.bootstrap.Modal(document.getElementById('observationModalExpenses'));
+  }
+
+  openObservationModal() {
+    const modalElement = document.getElementById('observationModalExpenses');
+    if (modalElement) {
+      const observationModal = new window.bootstrap.Modal(modalElement, {
+        backdrop: 'static'
+      });
+      observationModal.show();
+    }
+  }
+
+  saveChangesExpenses() {
+    if (!this.selectedExpense || !this.observation.trim()) return;
+
+    const updateDTO = {
+      id: this.updatedExpense.id,
+      status: this.updatedExpense.status,
+      expiration_multiplier: this.updatedExpense.expiration_multiplier,
+      first_expiration_date: this.updatedExpense.first_expiration_date,
+      second_expiration_date: this.updatedExpense.second_expiration_date
+    };
+
+    this.expenseService.updateExpense(updateDTO, this.observation).subscribe({
+      next: () => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Éxito',
+          text: 'Los cambios se guardaron correctamente'
+        });
+        this.observationModal.hide();
+        this.detallesModal.hide();
+        this.refreshExpensesList();
+      },
+      error: (error) => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Ocurrió un error al guardar los cambios: ' + error
+        });
+      }
+    });
+  }
+  
+  refreshExpensesList() {
+    // Emit event to parent component to refresh the list
+    // You'll need to implement this based on your application's structure
+  }
+
+  
+
+  hasChanges(): boolean {
+    const hasMultiplierChanges = 
+      this.latePaymentPercentage !== this.originalLatePayment * 100 ||
+      this.expirationPercentage !== this.originalExpiration * 100;
+    
+    const hasGenerationDayChanges = this.generationDay !== this.originalGenerationDay;
+    
+    return hasMultiplierChanges || hasGenerationDayChanges;
+  }
+
+  getChangeSummary(): string[] {
+    const changes: string[] = [];
+    
+    if (this.latePaymentPercentage !== this.originalLatePayment * 100) {
+      changes.push(`Multiplicador de pagos atrasados: ${(this.originalLatePayment * 100).toFixed(1)}% → ${this.latePaymentPercentage.toFixed(1)}%`);
+    }
+    
+    if (this.expirationPercentage !== this.originalExpiration * 100) {
+      changes.push(`Multiplicador de vencimiento: ${(this.originalExpiration * 100).toFixed(1)}% → ${this.expirationPercentage.toFixed(1)}%`);
+    }
+    
+    if (this.generationDay !== this.originalGenerationDay) {
+      changes.push(`Día de generación: ${this.originalGenerationDay} → ${this.generationDay}`);
+    }
+    
+    return changes;
+  }
+
+  handleSaveClick() {
+    if (this.hasChanges()) {
+      // Cerrar el modal de multiplicadores
+      const multipliersModalElement = document.getElementById('multipliersModal');
+      if (multipliersModalElement) {
+        const multipliersModal = window.bootstrap.Modal.getInstance(multipliersModalElement);
+        if (multipliersModal) {
+          multipliersModal.hide();
+        }
+      }
+
+      // Abrir el modal de observación
+      const observationModalElement = document.getElementById('observationModal');
+      if (observationModalElement) {
+        const observationModal = new window.bootstrap.Modal(observationModalElement);
+        observationModal.show();
+      }
+    }
+  }
+
+  saveChanges() {
+    if (!this.observation.trim()) {
+      Swal.fire({
+        title: 'Error',
+        text: 'La observación es obligatoria',
+        icon: 'error',
+        confirmButtonText: 'Aceptar'
+      });
+      return;
+    }
+
+    const requests: Observable<any>[] = [];
+    const updatedValues: any = {};
+
+    // Preparar las solicitudes solo para los valores que han cambiado
+    if (this.latePaymentPercentage !== this.originalLatePayment * 100) {
+      updatedValues.latePayment = this.latePaymentPercentage / 100;
+      requests.push(
+        this.expenseService.updateLatePaymentMultiplier(
+          this.latePaymentPercentage / 100,
+          this.observation
+        )
+      );
+    }
+
+    if (this.expirationPercentage !== this.originalExpiration * 100) {
+      updatedValues.expiration = this.expirationPercentage / 100;
+      requests.push(
+        this.expenseService.updateExpirationMultiplier(
+          this.expirationPercentage / 100,
+          this.observation
+        )
+      );
+    }
+
+    if (this.generationDay !== this.originalGenerationDay) {
+      updatedValues.generationDay = this.generationDay;
+      requests.push(
+        this.expenseService.updateGenerationDay(
+          this.generationDay,
+          this.observation
+        )
+      );
+    }
+
+    if (requests.length === 0) {
+      Swal.fire({
+        title: 'Información',
+        text: 'No hay cambios para guardar',
+        icon: 'info',
+        confirmButtonText: 'Aceptar'
+      });
+      return;
+    }
+
+    // Mostrar loading
+    Swal.fire({
+      title: 'Guardando cambios',
+      text: 'Por favor espere...',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    // Ejecutar todas las solicitudes en paralelo
+    forkJoin(requests).subscribe({
+      next: (responses) => {
+        console.log('Respuestas:', responses);
+        
+        // Actualizar valores originales con los nuevos valores
+        if (updatedValues.latePayment !== undefined) {
+          this.originalLatePayment = updatedValues.latePayment;
+        }
+        if (updatedValues.expiration !== undefined) {
+          this.originalExpiration = updatedValues.expiration;
+        }
+        if (updatedValues.generationDay !== undefined) {
+          this.originalGenerationDay = updatedValues.generationDay;
+        }
+
+        // Cerrar modales
+        this.closeAllModals();
+        
+        // Limpiar observación
+        this.observation = '';
+
+        // Mostrar mensaje de éxito
+        Swal.fire({
+          title: 'Éxito',
+          text: 'Los cambios se han guardado correctamente',
+          icon: 'success',
+          confirmButtonText: 'Aceptar'
+        }).then(() => {
+          // Recargar configuración
+          this.loadConfiguration();
+        });
+      },
+      error: (error) => {
+        console.error('Error al guardar los cambios:', error);
+        Swal.fire({
+          title: 'Error',
+          text: 'Ocurrió un error al guardar los cambios',
+          icon: 'error',
+          confirmButtonText: 'Aceptar'
+        });
+      }
+    });
+  }
+
+  
+  showConfirmation() {
+    Swal.fire({
+      title: 'Cambios guardados',
+      text: 'Los cambios se han guardado correctamente.',
+      icon: 'success',
+      confirmButtonText: 'Aceptar',
+      confirmButtonColor: "#3085d6"
+    }).then(() => {
+      this.closeModal();
+    });
+  }
+  
+  closeModal() {
+    this.observation = '';
+    const modal = document.getElementById('multipliersModal');
+    if (modal) {
+      (modal as any).modal('hide'); // Cierra el modal
+    }
+  }
+
+  updateMultiplierFromPercentage(field: 'latePayment' | 'expiration', value: number) {
+    if (value < 0) value = 0;
+    if (value > 100) value = 100;
+    
+    if (field === 'latePayment') {
+      this.latePaymentPercentage = value;
+    } else if (field === 'expiration') {
+      this.expirationPercentage = value;
+    }
+  }
+
+
+  closeAllModals() {
+    ['multipliersModal', 'observationModal'].forEach(modalId => {
+      const modalElement = document.getElementById(modalId);
+      if (modalElement) {
+        const modalInstance = window.bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) {
+          modalInstance.hide();
+        }
+      }
+    });
+  }
+
+  openModal() {
+    const modalElement = document.getElementById('multipliersModal');
+    if (modalElement) {
+      const modal = new window.bootstrap.Modal(modalElement);
+      modal.show();
+    }
+  }
+
+
 validateDates() {
   const desde = new Date(this.filtros.desde);
   const hasta = new Date(this.filtros.hasta);

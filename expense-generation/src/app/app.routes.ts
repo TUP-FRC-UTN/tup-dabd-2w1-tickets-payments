@@ -6,6 +6,10 @@ import { ExpenseGenerationViewComponent } from './expense-generation-view/expens
 export const routes: Routes = [
     { path: '', component: ExpenseGenerationViewComponent },
     { path: 'expense-generation-admin-view', component: ExpenseGenerationAdminViewComponent },
+    {path: 'expense-generation-user-view', component: ExpenseGenerationUserViewComponent},
+    // {path: 'expense-generation-accountant-view', component: ExpenseGenerationAccountantViewComponent},
+    { path: '**', redirectTo: '' }
+
   ];
   
   @NgModule({
