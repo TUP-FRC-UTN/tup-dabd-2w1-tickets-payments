@@ -9,17 +9,7 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import autoTable from 'jspdf-autotable';
-import { forkJoin } from 'rxjs/internal/observable/forkJoin';
-import { firstValueFrom } from 'rxjs/internal/firstValueFrom';
-import Swal from 'sweetalert2';
-import { Observable } from 'rxjs/internal/Observable';
-declare var window: any;
 
-interface MultiplierData {
-  latePayment: number;
-  expiration: number;
-  generationDay: number;
-}
 
 @Component({
   selector: 'app-expense-generation-admin-view',
@@ -31,18 +21,9 @@ interface MultiplierData {
 })
 export class ExpenseGenerationAdminViewComponent implements OnInit {
   selectedExpense: ExpenseGenerationExpenseInterface | null = null;
-  verDetalles(expense: ExpenseGenerationExpenseInterface) {
+  async verDetalles(expense: ExpenseGenerationExpenseInterface) {
     this.selectedExpense = expense;
-    this.updatedExpense = {
-      id: expense.id,
-      status: expense.status,
-      first_expiration_date: expense.first_expiration_date,
-      second_expiration_date: expense.second_expiration_date,
-      second_expiration_amount: expense.second_expiration_amount,
-      expiration_multiplier: 1
-    };
   }
-  
 
   isLoading: boolean = false;
   error: string | null = null;
@@ -55,51 +36,20 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
   ownerMap: Map<number, Owner> = new Map();
   ownersWithExpenses: { owner: Owner; expenses: ExpenseGenerationExpenseInterface[] }[] = [];
   ownerNames: { [key: number]: string } = {};
-  latePaymentMultiplier: number = 0;
-  expirationMultiplier: number = 0;
-  isLoadingMultipliers: boolean = false;
-  multiplierError: string | null = null;
-
-  observation: string = '';
-  
-  // Valores originales (desde la BD)
-  originalLatePayment: number = 0;
-  originalExpiration: number = 0;
-  
-  // Valores actuales en porcentaje
-  latePaymentPercentage: number = 0;
-  expirationPercentage: number = 0;
-
-  // Valores originales
-  originalGenerationDay: number = 1;
-  
-  // Valores actuales
-  generationDay: number = 1;
-  
-  
-  updatedExpense: any = {};
-  detallesModal: any;
-  observationModal: any;
-
-
   @ViewChild('searchInput') searchInput!: ElementRef;
-  @ViewChild('multipliersModal') multipliersModal!: ElementRef;
+
   periodos = Array.from({length: 12}, (_, i) => i + 1);
   filtros = {
   desde: '',
   hasta: '',
   estado: '',
   montoMinimo: null as number | null,
-  periodo: null as number | null
+  periodo: null as number | null  
   };
-  multiplier: number = 1;
-
 
   estados = ['Pendiente', 'Pago', 'Exceptuado'];
 
   constructor(private expenseService: ExpenseGenerationExpenseService) {}
-
-
 
   loadOwnerNames(ownerIds: number[]) {
     const validOwnerIds = ownerIds.filter(id => id !== undefined && id !== null);
@@ -132,17 +82,11 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
     const today = new Date();
     const lastMonth = new Date();
     lastMonth.setMonth(lastMonth.getMonth() - 3);
-
+  
     this.filtros.hasta = today.toISOString().split('T')[0];
     this.filtros.desde = lastMonth.toISOString().split('T')[0];
-
+  
     this.loadAllOwnersWithExpenses();
-
-    this.loadConfiguration();
-
-    // Initialize modals
-    this.detallesModal = new window.bootstrap.Modal(document.getElementById('detallesModal'));
-    this.observationModal = new window.bootstrap.Modal(document.getElementById('observationModal'));
   }
 
   maxDate: string = new Date().toISOString().split('T')[0];
@@ -549,7 +493,7 @@ validateDates() {
 
   getPlotNumbers(owner: Owner): string {
     if (!owner.plots || owner.plots.length === 0) return 'Sin lotes';
-    return owner.plots.map(plot => `${plot.plot_number}`).join(', ');
+    return owner.plots.map(plot => `${plot.plotNumber}`).join(', ');
   }
 
   buscarUsuarios() {
@@ -557,28 +501,28 @@ validateDates() {
       this.filteredUsers = [];
       return;
     }
-  
-    const searchTermLower = this.searchTerm.toLowerCase();
-    
+
     this.filteredUsers = this.allOwners.filter(owner => {
-      const fullName = `${owner.name} ${owner.lastname}`.toLowerCase();
-      const dni = owner.dni.toString();
-      const plotMatch = owner.plots?.some(plot => 
-        plot.plot_number.toString().includes(this.searchTerm)
-      );
-      
-      return fullName.includes(searchTermLower) || 
-             dni.includes(this.searchTerm) || 
-             plotMatch;
+      if (this.searchType === 'name') {
+        const fullName = `${owner.name} ${owner.lastname}`.toLowerCase();
+        return fullName.includes(this.searchTerm.toLowerCase());
+      } else if (this.searchType === 'dni') {
+        return owner.dni.toString().includes(this.searchTerm);
+      } else {
+        return owner.plots?.some(plot => 
+          plot.plotNumber.toString().includes(this.searchTerm)
+        );
+      }
     });
   }
 
   seleccionarUsuario(owner: Owner) {
     this.selectedOwner = owner;
-    this.searchTerm = `${owner.name} ${owner.lastname}`; 
+    this.searchTerm = this.searchType === 'name' 
+      ? `${owner.name} ${owner.lastname}`
+      : owner.dni.toString();
     this.buscarBoletas();
   }
-
 
   buscarBoletas() {
     this.isLoading = true;
@@ -768,62 +712,4 @@ private formatDate(date: Date): string {
     return new Intl.DateTimeFormat('es-ES', options).format(date);
 }
  //Genera pdf y excel, filtros correctos, nuevo modal, boton ver mas implementado no completo, html rehecho y nueva interfaz, ligero
- 
- 
- 
- selectedExpirationDates = {
-  first_expiration_date: '',
-  second_expiration_date: ''
-  };
-
-  validDates: boolean = true;
-
-  validateExpirationDates() {
-    const firstDate = new Date(this.updatedExpense.first_expiration_date);
-    const secondDate = new Date(this.updatedExpense.second_expiration_date);
-    
-    if (firstDate >= secondDate) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'La primera fecha de vencimiento debe ser anterior a la segunda fecha'
-      });
-      this.updatedExpense.second_expiration_date = this.selectedExpense?.second_expiration_date;
-    }
-  }
-  
-  calculateExpirationMultiplier() {
-    if (this.selectedExpense && this.updatedExpense.second_expiration_amount) {
-      this.updatedExpense.expiration_multiplier = 
-        this.updatedExpense.second_expiration_amount / this.selectedExpense.first_expiration_amount;
-    }
-  }
-
-  
-
-  onlyAllowNumbers(event: KeyboardEvent): void {
-    const key = event.key;
-    // Permitir números, un punto decimal y no permitir otros caracteres
-    if (!/[\d.]/.test(key) && key !== 'Backspace' && key !== 'Tab') {
-      event.preventDefault();
-    }
-
-  }
-  
-  getOwnerName(ownerId: number): string {
-    const owner = this.ownerMap.get(ownerId);
-    return owner ? `${owner.name} ${owner.lastname}` : 'No asignado';
-  }
-
-  getOwnerDni(ownerId: number): string {
-    const owner = this.ownerMap.get(ownerId);
-    return owner ? owner.dni.toString() : 'N/A';
-  }
-
-  getOwnerPlots(ownerId: number): string {
-    const owner = this.ownerMap.get(ownerId);
-    return owner ? this.getPlotNumbers(owner) : 'Sin lotes';
-  }
-  
-
 }

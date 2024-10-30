@@ -106,78 +106,11 @@ getActiveOwners(): Observable<any[]> {
 }
 
 
+
+
 updateStatus(expensePaymentUpdateDTO: any): Observable<any> {
   const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
   return this.http.put<any>(`${this.ApiBaseUrl}update/status`, expensePaymentUpdateDTO, { headers });
 }
-
-updateExpense(expenseUpdateDTO: any, observation: string): Observable<any> {
-  const headers = new HttpHeaders({
-    'Content-Type': 'application/json',
-    'X-Update-Observation': observation
-  });
-
-  return this.http.put<any>(`${this.ApiBaseUrl}update`, expenseUpdateDTO, { headers }).pipe(
-    catchError(this.handleError)
-  );
-}
-// ----------------------------------------------------------------------------------
-
-getMultipliers(): Observable<{ latePayment: number; expiration: number }> {
-  const latePaymentUrl = `${this.ApiBaseUrl}late-payment-multiplier`;
-  const expirationUrl = `${this.ApiBaseUrl}expiration-multiplier`;
-
-  return forkJoin({
-    latePayment: this.http.get<number>(latePaymentUrl),
-    expiration: this.http.get<number>(expirationUrl)
-  }).pipe(
-    catchError(this.handleError)
-  );
-}
-
-getGenerationDay(): Observable<number> {
-  return this.http.get<number>(`${this.ApiBaseUrl}generation-day`).pipe(
-    catchError(this.handleError)
-  );  
-}
-
-updateLatePaymentMultiplier(multiplier: number, observation: string): Observable<any> {
-  const url = `${this.ApiBaseUrl}late-payment-multiplier`;
-  return this.http.put(url, JSON.stringify(multiplier), {
-    headers: new HttpHeaders({
-      'Content-Type': 'application/json',
-      'X-Update-Observation': observation
-    })
-  }).pipe(
-    catchError(this.handleError)
-  );
-}
-
-updateExpirationMultiplier(multiplier: number, observation: string): Observable<any> {
-  const url = `${this.ApiBaseUrl}expiration-multiplier`;
-  return this.http.put(url, JSON.stringify(multiplier), {
-    headers: new HttpHeaders({
-      'Content-Type': 'application/json',
-      'X-Update-Observation': observation
-    })
-  }).pipe(
-    catchError(this.handleError)
-  );
-}
-
-updateGenerationDay(day: number, observation: string): Observable<any> {
-  const url = `${this.ApiBaseUrl}generation-day`;
-  return this.http.put(url, JSON.stringify(day), {
-    headers: new HttpHeaders({
-      'Content-Type': 'application/json',
-      'X-Update-Observation': observation
-    })
-  }).pipe(
-    catchError(this.handleError)
-  );
-}
-
-
-
 
 }
