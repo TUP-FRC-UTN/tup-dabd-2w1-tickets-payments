@@ -70,16 +70,24 @@
               >
             </div>
           </div>
-
+          
           <!-- Action Buttons -->
           <div class="col-md-3 d-flex gap-3 justify-content-end">
-            <button class="btn  bi bi-trash" title="Limpiar Filtros" (click)="limpiarFiltros()" style="color: gray; background-color: white; border: 1px solid gray"></button>
-            <button class="btn btn-success bi bi-file-earmark-excel" title="Exportar a Excel" (click)="exportToExcel()"></button>
-            <button class="btn btn-danger bi bi-file-earmark-pdf" title="Exportar a PDF" (click)="exportToPDF()"></button>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filtrosAvanzados">
-              <i class="bi bi-funnel-fill"></i>
-            </button>
-            <button class="btn bi bi-arrow-clockwise " style="background-color: #ffc107; color: white;" title="Actualizar Multiplicadores" (click)="openModal()"></button>
+            <div class="d-flex gap-1">
+              <button class="btn btn-primary" data-bs-toggle="modal" title="Filtros Avanzados" data-bs-target="#filtrosAvanzados">
+                <i class="bi bi-sort-down-alt"></i>
+              </button>
+              <button class="btn btn-primary bi bi-trash" title="Limpiar Filtros" (click)="limpiarFiltros()"></button>
+            </div>
+            <div>
+              <button class="btn btn-warning"  (click)="openModal()" style="color: white;">Facturación</button>
+            </div>
+            <div class="d-flex gap-1">
+              <button class="btn btn-success bi bi-file-earmark-excel" title="Exportar a Excel" (click)="exportToExcel()"></button>
+              <button class="btn btn-danger bi bi-file-earmark-pdf" title="Exportar a PDF" (click)="exportToPDF()"></button>
+            </div>
+            <!-- <button class="btn btn-warning bi bi-gear " title="Actualizar Multiplicadores" (click)="openModal()" style="color: white;"></button> -->
+
           </div>
           
           
@@ -369,8 +377,8 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-        <button type="button" class="btn btn-primary" (click)="buscarBoletas()" data-bs-dismiss="modal">Aplicar Filtros</button>
-        <button type="button" class="btn btn-outline-secondary" (click)="limpiarFiltros()">Limpiar Filtros</button>
+        <button type="button" class="btn btn-primary" (click)="buscarBoletas()" data-bs-dismiss="modal">Aplicar</button>
+        <button type="button" class="btn btn-primary bi bi-trash" title="Limpiar Filtros" (click)="limpiarFiltros()"></button>
       </div>
     </div>
   </div>
