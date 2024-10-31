@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { catchError, forkJoin, map, mergeMap, Observable, throwError } from 'rxjs';
 import { ExpenseGenerationExpenseInterface } from '../expense-generation-interfaces/expense-generation-expense-interface';
 import { Owner } from '../expense-generation-interfaces/owner';
+import { ExpenseUpdateDTO } from '../expense-generation-interfaces/expense-update.interface';
 @Injectable({
   providedIn: 'root'
 })
@@ -111,15 +112,15 @@ updateStatus(expensePaymentUpdateDTO: any): Observable<any> {
   return this.http.put<any>(`${this.ApiBaseUrl}update/status`, expensePaymentUpdateDTO, { headers });
 }
 
-updateExpense(expenseUpdateDTO: any, observation: string): Observable<any> {
-  const headers = new HttpHeaders({
-    'Content-Type': 'application/json',
-    'X-Update-Observation': observation
-  });
+updateExpense(expenseData: ExpenseUpdateDTO, observation: string): Observable<any> {
+  const headers = new HttpHeaders()
+    .set('Content-Type', 'application/json')
+    .set('X-Update-Observation', observation);
 
-  return this.http.put<any>(`${this.ApiBaseUrl}update`, expenseUpdateDTO, { headers }).pipe(
-    catchError(this.handleError)
-  );
+  return this.http.put(`${this.ApiBaseUrl}/${expenseData.id}`, expenseData, { headers })
+    .pipe(
+      catchError(this.handleError)
+    );
 }
 // ----------------------------------------------------------------------------------
 

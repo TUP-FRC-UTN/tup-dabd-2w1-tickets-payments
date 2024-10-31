@@ -42,8 +42,8 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
       expiration_multiplier: 1
     };
   }
-  
-
+  visiblePages: number[] = [];
+  pagedExpenses: any[] = [];
   isLoading: boolean = false;
   error: string | null = null;
   expenses: ExpenseGenerationExpenseInterface[] = [];
@@ -59,7 +59,10 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
   expirationMultiplier: number = 0;
   isLoadingMultipliers: boolean = false;
   multiplierError: string | null = null;
-
+  itemsPerPage: number = 10;
+  currentPage: number = 1;
+  totalItems: number = 0;
+  totalPages: number = 0;
   observation: string = '';
   
   // Valores originales (desde la BD)
@@ -80,7 +83,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
   updatedExpense: any = {};
   detallesModal: any;
   observationModal: any;
-
+  
 
   @ViewChild('searchInput') searchInput!: ElementRef;
   @ViewChild('multipliersModal') multipliersModal!: ElementRef;
@@ -136,13 +139,59 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
     this.filtros.hasta = today.toISOString().split('T')[0];
     this.filtros.desde = lastMonth.toISOString().split('T')[0];
 
-    this.loadAllOwnersWithExpenses();
-
-    this.loadConfiguration();
+    // Cargar datos iniciales
+    this.loadInitialData();
 
     // Initialize modals
     this.detallesModal = new window.bootstrap.Modal(document.getElementById('detallesModal'));
     this.observationModal = new window.bootstrap.Modal(document.getElementById('observationModal'));
+  }
+
+  loadInitialData() {
+    this.isLoading = true;
+    this.error = null;
+
+    // Primero cargar la configuración
+    this.loadConfiguration();
+
+    // Luego cargar los propietarios y sus boletas
+    this.expenseService.getAllOwnersWithExpenses().subscribe({
+      next: (data) => {
+        this.ownersWithExpenses = data;
+        
+        // Crear el mapa de propietarios
+        this.ownerMap = new Map(
+          data.map(item => [item.owner.id, item.owner])
+        );
+        
+        // Extraer todos los propietarios
+        this.allOwners = data.map(item => item.owner);
+        
+        // Extraer todas las boletas y aplicar filtros iniciales
+        const allExpenses = data.flatMap(item => item.expenses);
+        
+        // Verificar si hay boletas
+        if (allExpenses.length === 0) {
+          this.error = 'No se encontraron boletas en el sistema';
+        } else {
+          this.applyFiltersToExpenses(allExpenses);
+        }
+        
+        // Cargar los nombres de los propietarios
+        const uniqueOwnerIds = [...new Set(allExpenses.map(expense => expense.owner_id))];
+        this.loadOwnerNames(uniqueOwnerIds);
+        
+        this.isLoading = false;
+        
+        // Actualizar la paginación
+        this.loadExpenses();
+      },
+      error: (error) => {
+        console.error('Error al cargar los datos:', error);
+        this.error = 'Error al cargar los datos: ' + error.message;
+        this.isLoading = false;
+      }
+    });
   }
 
   maxDate: string = new Date().toISOString().split('T')[0];
@@ -177,7 +226,53 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
     });
   }
 
-  
+  loadExpenses() {
+    this.totalItems = this.expenses.length;
+    this.calculateTotalPages();
+    this.updateVisiblePages();
+    this.updatePagedExpenses();
+  }
+
+  calculateTotalPages() {
+    this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
+  }
+
+  updateVisiblePages() {
+    const maxVisiblePages = 3;
+    let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
+
+    // Ajustar startPage si estamos cerca del final
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    this.visiblePages = Array.from(
+      { length: endPage - startPage + 1 },
+      (_, i) => startPage + i
+    );
+  }
+
+  updatePagedExpenses() {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = Math.min(startIndex + this.itemsPerPage, this.totalItems);
+    this.pagedExpenses = this.expenses.slice(startIndex, endIndex);
+  }
+
+  goToPage(page: number) {
+    if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
+      this.currentPage = page;
+      this.updateVisiblePages();
+      this.updatePagedExpenses();
+    }
+  }
+
+  onItemsPerPageChange() {
+    this.currentPage = 1; 
+    this.calculateTotalPages();
+    this.updateVisiblePages();
+    this.updatePagedExpenses();
+  }
 
   isValidGenerationDay(): boolean {
     return this.generationDay >= 1 && this.generationDay <= 28;
@@ -581,6 +676,7 @@ validateDates() {
 
 
   buscarBoletas() {
+    this.currentPage = 1;
     this.isLoading = true;
     this.error = null;
 
@@ -596,6 +692,8 @@ validateDates() {
       const allExpenses = this.ownersWithExpenses.flatMap(item => item.expenses);
       this.applyFiltersToExpenses(allExpenses);
       this.isLoading = false;
+      this.currentPage = 1; 
+      this.loadExpenses();
     }
   }
 
@@ -689,6 +787,67 @@ validateDates() {
     }
   }
 
+  private formatDate(date: Date): string {
+    const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit', year: 'numeric' };
+    return new Intl.DateTimeFormat('es-ES', options).format(date);
+}
+ //Genera pdf y excel, filtros correctos, nuevo modal, boton ver mas implementado no completo, html rehecho y nueva interfaz, ligero
+ 
+ 
+ 
+ selectedExpirationDates = {
+  first_expiration_date: '',
+  second_expiration_date: ''
+  };
+
+  validDates: boolean = true;
+
+  validateExpirationDates() {
+    const firstDate = new Date(this.updatedExpense.first_expiration_date);
+    const secondDate = new Date(this.updatedExpense.second_expiration_date);
+    
+    if (firstDate >= secondDate) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'La primera fecha de vencimiento debe ser anterior a la segunda fecha'
+      });
+      this.updatedExpense.second_expiration_date = this.selectedExpense?.second_expiration_date;
+    }
+  }
+  
+  calculateExpirationMultiplier() {
+    if (this.selectedExpense && this.updatedExpense.second_expiration_amount) {
+      this.updatedExpense.expiration_multiplier = 
+        this.updatedExpense.second_expiration_amount / this.selectedExpense.first_expiration_amount;
+    }
+  }
+
+  
+
+  onlyAllowNumbers(event: KeyboardEvent): void {
+    const key = event.key;
+    // Permitir números, un punto decimal y no permitir otros caracteres
+    if (!/[\d.]/.test(key) && key !== 'Backspace' && key !== 'Tab') {
+      event.preventDefault();
+    }
+
+  }
+  
+  getOwnerName(ownerId: number): string {
+    const owner = this.ownerMap.get(ownerId);
+    return owner ? `${owner.name} ${owner.lastname}` : 'No asignado';
+  }
+
+  getOwnerDni(ownerId: number): string {
+    const owner = this.ownerMap.get(ownerId);
+    return owner ? owner.dni.toString() : 'N/A';
+  }
+
+  getOwnerPlots(ownerId: number): string {
+    const owner = this.ownerMap.get(ownerId);
+    return owner ? this.getPlotNumbers(owner) : 'Sin lotes';
+  }
 
   //EXPORTAR A PDF Y EXCEL
 
@@ -763,67 +922,7 @@ exportToExcel(): void {
     XLSX.writeFile(workbook, `listado_boletas_${this.formatDate(new Date(this.filtros.desde))}_${this.formatDate(new Date(this.filtros.hasta))}.xlsx`);
 }
 
-private formatDate(date: Date): string {
-    const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit', year: 'numeric' };
-    return new Intl.DateTimeFormat('es-ES', options).format(date);
-}
- //Genera pdf y excel, filtros correctos, nuevo modal, boton ver mas implementado no completo, html rehecho y nueva interfaz, ligero
- 
- 
- 
- selectedExpirationDates = {
-  first_expiration_date: '',
-  second_expiration_date: ''
-  };
 
-  validDates: boolean = true;
-
-  validateExpirationDates() {
-    const firstDate = new Date(this.updatedExpense.first_expiration_date);
-    const secondDate = new Date(this.updatedExpense.second_expiration_date);
-    
-    if (firstDate >= secondDate) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'La primera fecha de vencimiento debe ser anterior a la segunda fecha'
-      });
-      this.updatedExpense.second_expiration_date = this.selectedExpense?.second_expiration_date;
-    }
-  }
-  
-  calculateExpirationMultiplier() {
-    if (this.selectedExpense && this.updatedExpense.second_expiration_amount) {
-      this.updatedExpense.expiration_multiplier = 
-        this.updatedExpense.second_expiration_amount / this.selectedExpense.first_expiration_amount;
-    }
-  }
-
-  
-
-  onlyAllowNumbers(event: KeyboardEvent): void {
-    const key = event.key;
-    // Permitir números, un punto decimal y no permitir otros caracteres
-    if (!/[\d.]/.test(key) && key !== 'Backspace' && key !== 'Tab') {
-      event.preventDefault();
-    }
-
-  }
-  
-  getOwnerName(ownerId: number): string {
-    const owner = this.ownerMap.get(ownerId);
-    return owner ? `${owner.name} ${owner.lastname}` : 'No asignado';
-  }
-
-  getOwnerDni(ownerId: number): string {
-    const owner = this.ownerMap.get(ownerId);
-    return owner ? owner.dni.toString() : 'N/A';
-  }
-
-  getOwnerPlots(ownerId: number): string {
-    const owner = this.ownerMap.get(ownerId);
-    return owner ? this.getPlotNumbers(owner) : 'Sin lotes';
-  }
   
 
 }

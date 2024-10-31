@@ -91,182 +91,7 @@
           </div>
           
           
-          <!-- Cambiar Multiplicadores -->
-
-          <!-- Modal Principal de Multiplicadores -->
-    <div class="modal fade" id="multipliersModal" tabindex="-1" aria-labelledby="multipliersModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="multipliersModalLabel">Configuración de Expensas</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <!-- Spinner de carga -->
-            <div *ngIf="isLoadingMultipliers" class="text-center my-3">
-              <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Cargando...</span>
-              </div>
-            </div>
-
-            <!-- Mensaje de error -->
-            <div *ngIf="multiplierError" class="alert alert-danger">
-              {{ multiplierError }}
-            </div>
-
-            <!-- Formulario -->
-            <div [class.d-none]="isLoadingMultipliers">
-              <!-- Día de Generación -->
-              <div class="mb-4">
-                <label for="generationDayInput" class="form-label">Día de Generación de Expensas:</label>
-                <div class="input-group">
-                  <input
-                    type="number"
-                    id="generationDayInput"
-                    [(ngModel)]="generationDay"
-                    class="form-control"
-                    min="1"
-                    max="28"
-                    [class.is-invalid]="!isValidGenerationDay()"
-                  />
-                  <span class="input-group-text">del mes</span>
-                </div>
-                <div class="form-text" [class.text-danger]="!isValidGenerationDay()">
-                  El día debe estar entre 1 y 28
-                </div>
-              </div>
-
-              <hr class="my-4">
-
-              <!-- Multiplicadores -->
-              <div class="mb-3">
-                <label for="latePaymentInput" class="form-label">Porcentaje de pagos atrasados:</label>
-                <div class="input-group">
-                  <input
-                    type="number"
-                    id="latePaymentInput"
-                    [(ngModel)]="latePaymentPercentage"
-                    class="form-control"
-                    min="0"
-                    max="100"
-                    (ngModelChange)="updateMultiplierFromPercentage('latePayment', $event)"
-                  />
-                  <span class="input-group-text">%</span>
-                </div>
-              </div>
-
-              <div class="mb-3">
-                <label for="expirationInput" class="form-label">Porcentaje de vencimiento:</label>
-                <div class="input-group">
-                  <input
-                    type="number"
-                    id="expirationInput"
-                    [(ngModel)]="expirationPercentage"
-                    class="form-control"
-                    min="0"
-                    max="100"
-                    (ngModelChange)="updateMultiplierFromPercentage('expiration', $event)"
-                  />
-                  <span class="input-group-text">%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              (click)="handleSaveClick()"
-              [disabled]="isLoadingMultipliers || (!hasChanges() && generationDay === originalGenerationDay) || !isValidGenerationDay()"
-            >
-              Guardar
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal de Observación -->
-    <div class="modal fade" id="observationModal" tabindex="-1" aria-labelledby="observationModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="observationModalLabel">Justificación de los Cambios</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <div class="mb-3">
-              <label for="observationInput" class="form-label">Por favor, explique el motivo de los cambios:</label>
-              <textarea
-                id="observationInput"
-                [(ngModel)]="observation"
-                class="form-control"
-                rows="3"
-                required
-              ></textarea>
-            </div>
-            <!-- Resumen de cambios -->
-            <div class="mt-3 p-3 bg-light rounded" *ngIf="getChangeSummary().length > 0">
-              <h6>Resumen de cambios:</h6>
-              <ul class="mb-0">
-                <li *ngFor="let change of getChangeSummary()">{{ change }}</li>
-              </ul>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              (click)="saveChanges()"
-              [disabled]="!observation.trim()">
-              Confirmar
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Modal de Observación de Expensa -->
-    <div class="modal fade" id="observationModalExpenses" tabindex="-1" data-bs-backdrop="static">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Justificación de los Cambios</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <div class="mb-3">
-              <label for="observationInput" class="form-label">Por favor, explique el motivo de los cambios:</label>
-              <textarea
-                id="observationInput"
-                [(ngModel)]="observation"
-                class="form-control"
-                rows="3"
-                required></textarea>
-            </div>
-            <!-- Resumen de cambios -->
-            <div class="mt-3 p-3 bg-light rounded" *ngIf="getChangeSummaryExpenses().length > 0">
-              <h6>Resumen de cambios:</h6>
-              <ul class="mb-0">
-                <li *ngFor="let change of getChangeSummaryExpenses()">{{ change }}</li>
-              </ul>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              (click)="saveChangesExpenses()"
-              [disabled]="!observation.trim()">
-              Confirmar
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+         
     
 
         <!-- Results Table -->
@@ -286,7 +111,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let expense of expenses">
+              <tr *ngFor="let expense of pagedExpenses">
                 <td class="text-nowrap font-monospace">{{ expense.period }}</td>
                 <td>
                   <span class="badge rounded-pill" 
@@ -301,9 +126,9 @@
                 <td class="text-nowrap">{{ getOwnerName(expense.owner_id) }}</td>
                 <td class="text-nowrap">{{ getOwnerDni(expense.owner_id) }}</td>
                 <td class="text-nowrap">{{ getOwnerPlots(expense.owner_id) }}</td>
-                <td class="text-nowrap  text-start">$ {{ expense.first_expiration_amount | number:'1.2-2' }}</td>
-                <td class="text-nowrap  text-start">$ {{ expense.second_expiration_amount | number:'1.2-2' }}</td>
-                <td class="text-nowrap  text-start">$ {{ expense.amount_payed| number:'1.2-2' }}</td>
+                <td class="text-nowrap text-end">$ {{ expense.first_expiration_amount | number:'1.2-2' }}</td>
+                <td class="text-nowrap text-end">$ {{ expense.second_expiration_amount | number:'1.2-2' }}</td>
+                <td class="text-nowrap text-end">$ {{ expense.amount_payed | number:'1.2-2' }}</td>
                 <td class="text-center">
                   <button
                     class="btn btn-light btn-sm"
@@ -317,6 +142,61 @@
               </tr>
             </tbody>
           </table>
+        
+          <!-- Pagination controls -->
+          <div class="d-flex justify-content-between align-items-center border-top pt-3">
+            <!-- Items per page dropdown -->
+            <div class="d-flex align-items-center">
+              <span class="me-2">Mostrar</span>
+              <select 
+                class="form-select form-select-sm" 
+                style="width: auto"
+                [(ngModel)]="itemsPerPage" 
+                (change)="onItemsPerPageChange()">
+                <option [value]="10">10</option>
+                <option [value]="25">25</option>
+                <option [value]="50">50</option>
+              </select>
+            </div>
+        
+            <!-- Pagination buttons -->
+            <nav aria-label="Page navigation" *ngIf="totalPages > 0">
+              <ul class="pagination pagination-sm mb-0">
+                <!-- First page -->
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <a class="page-link" (click)="goToPage(1)" [style.cursor]="currentPage === 1 ? 'not-allowed' : 'pointer'">
+                    <i class="bi bi-chevron-double-left"></i>
+                  </a>
+                </li>
+                
+                <!-- Previous page -->
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <a class="page-link" (click)="goToPage(currentPage - 1)" [style.cursor]="currentPage === 1 ? 'not-allowed' : 'pointer'">
+                    <i class="bi bi-chevron-left"></i>
+                  </a>
+                </li>
+                
+                <!-- Page numbers -->
+                <li class="page-item" *ngFor="let page of visiblePages" [class.active]="page === currentPage">
+                  <a class="page-link" (click)="goToPage(page)" style="cursor: pointer">{{ page }}</a>
+                </li>
+                
+                <!-- Next page -->
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <a class="page-link" (click)="goToPage(currentPage + 1)" [style.cursor]="currentPage === totalPages ? 'not-allowed' : 'pointer'">
+                    <i class="bi bi-chevron-right"></i>
+                  </a>
+                </li>
+                
+                <!-- Last page -->
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <a class="page-link" (click)="goToPage(totalPages)" [style.cursor]="currentPage === totalPages ? 'not-allowed' : 'pointer'">
+                    <i class="bi bi-chevron-double-right"></i>
+                  </a>
+                </li>
+              </ul>
+            </nav>
+          </div>
         </div>
 
         <!-- Loading State -->
@@ -339,6 +219,183 @@
     </div>
   </div>
 </div>
+
+ <!-- Cambiar Multiplicadores -->
+
+          <!-- Modal Principal de Multiplicadores -->
+          <div class="modal fade" id="multipliersModal" tabindex="-1" aria-labelledby="multipliersModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="multipliersModalLabel">Configuración de Expensas</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <!-- Spinner de carga -->
+                  <div *ngIf="isLoadingMultipliers" class="text-center my-3">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Cargando...</span>
+                    </div>
+                  </div>
+      
+                  <!-- Mensaje de error -->
+                  <div *ngIf="multiplierError" class="alert alert-danger">
+                    {{ multiplierError }}
+                  </div>
+      
+                  <!-- Formulario -->
+                  <div [class.d-none]="isLoadingMultipliers">
+                    <!-- Día de Generación -->
+                    <div class="mb-4">
+                      <label for="generationDayInput" class="form-label">Día de Generación de Expensas:</label>
+                      <div class="input-group">
+                        <input
+                          type="number"
+                          id="generationDayInput"
+                          [(ngModel)]="generationDay"
+                          class="form-control"
+                          min="1"
+                          max="28"
+                          [class.is-invalid]="!isValidGenerationDay()"
+                        />
+                        <span class="input-group-text">del mes</span>
+                      </div>
+                      <div class="form-text" [class.text-danger]="!isValidGenerationDay()">
+                        El día debe estar entre 1 y 28
+                      </div>
+                    </div>
+      
+                    <hr class="my-4">
+      
+                    <!-- Multiplicadores -->
+                    <div class="mb-3">
+                      <label for="latePaymentInput" class="form-label">Porcentaje de pagos atrasados:</label>
+                      <div class="input-group">
+                        <input
+                          type="number"
+                          id="latePaymentInput"
+                          [(ngModel)]="latePaymentPercentage"
+                          class="form-control"
+                          min="0"
+                          max="100"
+                          (ngModelChange)="updateMultiplierFromPercentage('latePayment', $event)"
+                        />
+                        <span class="input-group-text">%</span>
+                      </div>
+                    </div>
+      
+                    <div class="mb-3">
+                      <label for="expirationInput" class="form-label">Porcentaje de vencimiento:</label>
+                      <div class="input-group">
+                        <input
+                          type="number"
+                          id="expirationInput"
+                          [(ngModel)]="expirationPercentage"
+                          class="form-control"
+                          min="0"
+                          max="100"
+                          (ngModelChange)="updateMultiplierFromPercentage('expiration', $event)"
+                        />
+                        <span class="input-group-text">%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    (click)="handleSaveClick()"
+                    [disabled]="isLoadingMultipliers || (!hasChanges() && generationDay === originalGenerationDay) || !isValidGenerationDay()"
+                  >
+                    Guardar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+      
+          <!-- Modal de Observación -->
+          <div class="modal fade" id="observationModal" tabindex="-1" aria-labelledby="observationModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="observationModalLabel">Justificación de los Cambios</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label for="observationInput" class="form-label">Por favor, explique el motivo de los cambios:</label>
+                    <textarea
+                      id="observationInput"
+                      [(ngModel)]="observation"
+                      class="form-control"
+                      rows="3"
+                      required
+                    ></textarea>
+                  </div>
+                  <!-- Resumen de cambios -->
+                  <div class="mt-3 p-3 bg-light rounded" *ngIf="getChangeSummary().length > 0">
+                    <h6>Resumen de cambios:</h6>
+                    <ul class="mb-0">
+                      <li *ngFor="let change of getChangeSummary()">{{ change }}</li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    (click)="saveChanges()"
+                    [disabled]="!observation.trim()">
+                    Confirmar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Modal de Observación de Expensa -->
+          <div class="modal fade" id="observationModalExpenses" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Justificación de los Cambios</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label for="observationInput" class="form-label">Por favor, explique el motivo de los cambios:</label>
+                    <textarea
+                      id="observationInput"
+                      [(ngModel)]="observation"
+                      class="form-control"
+                      rows="3"
+                      required></textarea>
+                  </div>
+                  <!-- Resumen de cambios -->
+                  <div class="mt-3 p-3 bg-light rounded" *ngIf="getChangeSummaryExpenses().length > 0">
+                    <h6>Resumen de cambios:</h6>
+                    <ul class="mb-0">
+                      <li *ngFor="let change of getChangeSummaryExpenses()">{{ change }}</li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    (click)="saveChangesExpenses()"
+                    [disabled]="!observation.trim()">
+                    Confirmar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
 
 <!-- Advanced Filters Modal -->
 <div class="modal fade" id="filtrosAvanzados" tabindex="-1" aria-labelledby="filtrosAvanzadosLabel" aria-hidden="true">

@@ -1,0 +1,405 @@
+{
+  "owners":
+  [
+  {
+    "owner": {
+      "id": 1,
+      "name": "John",
+      "lastname": "Doe",
+      "dni": "12345678",
+      "cuitCuil": "20123456789",
+      "dateBirth": "1990-01-01",
+      "businessName": "",
+      "active": true,
+      "ownerType": "1"
+    },
+    "plot": {
+      "id": 1,
+      "plot_number": 100,
+      "block_number": 1,
+      "total_area_in_m2": 200,
+      "built_area_in_m2": 150,
+      "plot_state": "1",
+      "plot_type": "1",
+      "files": []
+    },
+    "user": {
+      "id": 1,
+      "name": "John",
+      "lastname": "Doe",
+      "username": "johndoe",
+      "password": "password1",
+      "email": "johndoe@example.com",
+      "phone_number": "123456789",
+      "dni": "12345678",
+      "active": true,
+      "avatar_url": "https://example.com/avatar1.jpg",
+      "datebirth": "1990-01-01",
+      "roles": ["Owner"],
+      "plot_id": 1,
+      "telegram_id": 12345
+    }
+  },
+  {
+    "owner": {
+      "id": 2,
+      "name": "Jane",
+      "lastname": "Smith",
+      "dni": "87654321",
+      "cuitCuil": "20876543219",
+      "dateBirth": "1985-05-10",
+      "businessName": "",
+      "active": true,
+      "ownerType": "1"
+    },
+    "plot": {
+      "id": 2,
+      "plot_number": 101,
+      "block_number": 1,
+      "total_area_in_m2": 250,
+      "built_area_in_m2": 180,
+      "plot_state": "2",
+      "plot_type": "1",
+      "files": []
+    },
+    "user": {
+      "id": 2,
+      "name": "Jane",
+      "lastname": "Smith",
+      "username": "janesmith",
+      "password": "password2",
+      "email": "janesmith@example.com",
+      "phone_number": "987654321",
+      "dni": "87654321",
+      "active": true,
+      "avatar_url": "https://example.com/avatar2.jpg",
+      "datebirth": "1985-05-10",
+      "roles": ["Owner"],
+      "plot_id": 2,
+      "telegram_id": 12346
+    }
+  },
+  {
+    "owner": {
+      "id": 3,
+      "name": "Michael",
+      "lastname": "Johnson",
+      "dni": "11223344",
+      "cuitCuil": "20112233445",
+      "dateBirth": "1979-12-25",
+      "businessName": "Johnson Enterprises",
+      "active": true,
+      "ownerType": "2"
+    },
+    "plot": {
+      "id": 3,
+      "plot_number": 102,
+      "block_number": 2,
+      "total_area_in_m2": 300,
+      "built_area_in_m2": 200,
+      "plot_state": "3",
+      "plot_type": "1",
+      "files": [
+        {
+          "name": "plot_document.pdf",
+          "uuid": "uuid-12345"
+        }
+      ]
+    },
+    "user": {
+      "id": 3,
+      "name": "Michael",
+      "lastname": "Johnson",
+      "username": "mjohnson",
+      "password": "password3",
+      "email": "mjohnson@example.com",
+      "phone_number": "123123123",
+      "dni": "11223344",
+      "active": true,
+      "avatar_url": "https://example.com/avatar3.jpg",
+      "datebirth": "1979-12-25",
+      "roles": ["Owner"],
+      "plot_id": 3,
+      "telegram_id": 12347
+    }
+  },
+  {
+    "owner": {
+      "id": 4,
+      "name": "Emily",
+      "lastname": "Brown",
+      "dni": "99887766",
+      "cuitCuil": "20998877665",
+      "dateBirth": "1992-07-13",
+      "businessName": "",
+      "active": true,
+      "ownerType": "1"
+    },
+    "plot": {
+      "id": 4,
+      "plot_number": 103,
+      "block_number": 2,
+      "total_area_in_m2": 220,
+      "built_area_in_m2": 160,
+      "plot_state": "1",
+      "plot_type": "3",
+      "files": []
+    },
+    "user": {
+      "id": 4,
+      "name": "Emily",
+      "lastname": "Brown",
+      "username": "ebrown",
+      "password": "password4",
+      "email": "ebrown@example.com",
+      "phone_number": "321321321",
+      "dni": "99887766",
+      "active": true,
+      "avatar_url": "https://example.com/avatar4.jpg",
+      "datebirth": "1992-07-13",
+      "roles": ["Owner"],
+      "plot_id": 4,
+      "telegram_id": 12348
+    }
+  },
+  {
+    "owner": {
+      "id": 5,
+      "name": "William",
+      "lastname": "Davis",
+      "dni": "55443322",
+      "cuitCuil": "20554433221",
+      "dateBirth": "1988-03-22",
+      "businessName": "",
+      "active": true,
+      "ownerType": "1"
+    },
+    "plot": {
+      "id": 5,
+      "plot_number": 104,
+      "block_number": 3,
+      "total_area_in_m2": 280,
+      "built_area_in_m2": 210,
+      "plot_state": "2",
+      "plot_type": "1",
+      "files": [
+        {
+          "name": "plot_file.jpg",
+          "uuid": "uuid-67890"
+        }
+      ]
+    },
+    "user": {
+      "id": 5,
+      "name": "William",
+      "lastname": "Davis",
+      "username": "wdavis",
+      "password": "password5",
+      "email": "wdavis@example.com",
+      "phone_number": "555555555",
+      "dni": "55443322",
+      "active": true,
+      "avatar_url": "https://example.com/avatar5.jpg",
+      "datebirth": "1988-03-22",
+      "roles": ["Owner"],
+      "plot_id": 5,
+      "telegram_id": 12349
+    }
+  },
+  {
+    "owner": {
+      "id": 6,
+      "name": "Olivia",
+      "lastname": "Martinez",
+      "dni": "66778899",
+      "cuitCuil": "20667788990",
+      "dateBirth": "1995-08-15",
+      "businessName": "",
+      "active": true,
+      "ownerType": "1"
+    },
+    "plot": {
+      "id": 6,
+      "plot_number": 105,
+      "block_number": 3,
+      "total_area_in_m2": 260,
+      "built_area_in_m2": 190,
+      "plot_state": "3",
+      "plot_type": "3",
+      "files": []
+    },
+    "user": {
+      "id": 6,
+      "name": "Olivia",
+      "lastname": "Martinez",
+      "username": "omartinez",
+      "password": "password6",
+      "email": "omartinez@example.com",
+      "phone_number": "666666666",
+      "dni": "66778899",
+      "active": true,
+      "avatar_url": "https://example.com/avatar6.jpg",
+      "datebirth": "1995-08-15",
+      "roles": ["Owner"],
+      "plot_id": 6,
+      "telegram_id": 12350
+    }
+  },
+  {
+    "owner": {
+      "id": 7,
+      "name": "Olivia",
+      "lastname": "Martinez",
+      "dni": "33445566",
+      "cuitCuil": "20334455678",
+      "dateBirth": "1982-11-30",
+      "businessName": "",
+      "active": true,
+      "ownerType": "1"
+    },
+    "plot": {
+      "id": 7,
+      "plot_number": 106,
+      "block_number": 3,
+      "total_area_in_m2": 300,
+      "built_area_in_m2": 250,
+      "plot_state": "1",
+      "plot_type": "1",
+      "files": []
+    },
+    "user": {
+      "id": 7,
+      "name": "Olivia",
+      "lastname": "Martinez",
+      "username": "omartinez",
+      "password": "password7",
+      "email": "omartinez@example.com",
+      "phone_number": "444444444",
+      "dni": "33445566",
+      "active": true,
+      "avatar_url": "https://example.com/avatar7.jpg",
+      "datebirth": "1982-11-30",
+      "roles": ["Owner"],
+      "plot_id": 7,
+      "telegram_id": 12351
+    }
+  },
+  {
+    "owner": {
+      "id": 8,
+      "name": "Sophia",
+      "lastname": "Hernandez",
+      "dni": "44556677",
+      "cuitCuil": "20445667788",
+      "dateBirth": "1993-04-20",
+      "businessName": "",
+      "active": true,
+      "ownerType": "1"
+    },
+    "plot": {
+      "id": 8,
+      "plot_number": 107,
+      "block_number": 4,
+      "total_area_in_m2": 240,
+      "built_area_in_m2": 180,
+      "plot_state": "2",
+      "plot_type": "3",
+      "files": []
+    },
+    "user": {
+      "id": 8,
+      "name": "Sophia",
+      "lastname": "Hernandez",
+      "username": "shernandez",
+      "password": "password8",
+      "email": "shernandez@example.com",
+      "phone_number": "333333333",
+      "dni": "44556677",
+      "active": true,
+      "avatar_url": "https://example.com/avatar8.jpg",
+      "datebirth": "1993-04-20",
+      "roles": ["Owner"],
+      "plot_id": 8,
+      "telegram_id": 12352
+    }
+  },
+  {
+    "owner": {
+      "id": 9,
+      "name": "Ava",
+      "lastname": "Lopez",
+      "dni": "22334455",
+      "cuitCuil": "20223445566",
+      "dateBirth": "1996-09-12",
+      "businessName": "",
+      "active": true,
+      "ownerType": "1"
+    },
+    "plot": {
+      "id": 9,
+      "plot_number": 108,
+      "block_number": 5,
+      "total_area_in_m2": 280,
+      "built_area_in_m2": 220,
+      "plot_state": "3",
+      "plot_type": "1",
+      "files": []
+    },
+    "user": {
+      "id": 9,
+      "name": "Ava",
+      "lastname": "Lopez",
+      "username": "alopez",
+      "password": "password9",
+      "email": "alopez@example.com",
+      "phone_number": "222222222",
+      "dni": "22334455",
+      "active": true,
+      "avatar_url": "https://example.com/avatar9.jpg",
+      "datebirth": "1996-09-12",
+      "roles": ["Owner"],
+      "plot_id": 9,
+      "telegram_id": 12353
+    }
+  },
+  {
+    "owner": {
+      "id": 10,
+      "name": "Isabella",
+      "lastname": "Wilson",
+      "dni": "55667788",
+      "cuitCuil": "20556677889",
+      "dateBirth": "1991-02-14",
+      "businessName": "",
+      "active": true,
+      "ownerType": "1"
+    },
+    "plot": {
+      "id": 10,
+      "plot_number": 109,
+      "block_number": 5,
+      "total_area_in_m2": 220,
+      "built_area_in_m2": 160,
+      "plot_state": "1",
+      "plot_type": "1",
+      "files": []
+    },
+    "user": {
+      "id": 10,
+      "name": "Isabella",
+      "lastname": "Wilson",
+      "username": "iwilson",
+      "password": "password10",
+      "email": "iwilson@example.com",
+      "phone_number": "999999999",
+      "dni": "55667788",
+      "active": true,
+      "avatar_url": "https://example.com/avatar10.jpg",
+      "datebirth": "1991-02-14",
+      "roles": ["Owner"],
+      "plot_id": 10,
+      "telegram_id": 12354
+    }
+  }
+]
+}
