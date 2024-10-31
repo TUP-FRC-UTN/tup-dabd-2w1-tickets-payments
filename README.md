@@ -5,7 +5,7 @@ Este proyecto es parte del Trabajo Práctico Integrador (TPI) realizado durante 
 
 <div> 
   <h1 align="center">
-     ✦ Metodos de Pago ✦
+     ✦ Boeltas y Cobros ✦
   </h1>
 </div>
 
