@@ -6,19 +6,28 @@
         <!-- Filter Row -->
         <div class="row mb-3">
           <!-- Search Type and Input -->
-          <div class="col-md-3 position-relative">
+          <div class="col-md-4 position-relative">
             <div class="input-group">
-              <input
-                type="text"
+              <div class="input-group-prepend">
+                <select class="form-select flex-grow-0 w-auto" [(ngModel)]="searchType">
+                  <option value="name">Nombre</option>
+                  <option value="dni">DNI</option>
+                  <option value="plot">Lote</option>
+                </select>
+              </div>
+              <input 
+                type="text" 
                 class="form-control"
                 [(ngModel)]="searchTerm"
+                [placeholder]="searchType === 'plot' ? 'Ingrese número de lote' : (searchType === 'dni' ? 'Ingrese DNI' : 'Ingrese nombre')"
                 (ngModelChange)="buscarUsuarios()"
-                placeholder="Buscar"
                 #searchInput
               >
+              <button class="btn btn-outline-secondary" type="button" (click)="clearSearch()">
+                <i class="bi bi-x-lg"></i>
+              </button>
             </div>
-            
-            <!-- Dropdown de usuarios filtrados -->
+            <!-- Filtered Users Dropdown -->
             <div class="position-absolute mt-1 w-100 z-1" *ngIf="filteredUsers.length > 0 && searchTerm.length > 0">
               <div class="list-group shadow">
                 <button 
@@ -43,13 +52,13 @@
               [(ngModel)]="filtros.estado" 
               (ngModelChange)="buscarBoletas()"
             >
-              <option value="">Seleccionar estado</option>
+              <option value="">Todos los estados</option>
               <option *ngFor="let estado of estados" [value]="estado">{{ estado }}</option>
             </select>
           </div>
 
           <!-- Date Range -->
-          <div class="col-md-4 ">
+          <div class="col-md-4">
             <div class="input-group">
               <input 
                 type="date" 
@@ -61,7 +70,7 @@
               >
               <input 
                 type="date" 
-                class="form-control ms-2"
+                class="form-control"
                 [(ngModel)]="filtros.hasta" 
                 (ngModelChange)="validateDates(); buscarBoletas()"
                 [min]="filtros.desde"
@@ -91,8 +100,7 @@
           </div>
           
           
-         
-    
+>
 
         <!-- Results Table -->
         <div class="table-responsive">
@@ -100,19 +108,18 @@
             <thead class="table-light">
               <tr>
                 <th class="text-nowrap">Periodo</th>
-                <th>Estado</th>
-                <th class="text-nowrap">Propietario</th>
-                <th class="text-nowrap">DNI</th>
-                <th class="text-nowrap">Lote</th>
+                <th>Propietario</th>
                 <th class="text-start text-nowrap">Monto Primer Pago</th>
                 <th class="text-start text-nowrap">Monto Segundo Pago</th>
                 <th class="text-start text-nowrap">Monto Pagado</th>
+                <th>Estado</th>
                 <th class="text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let expense of pagedExpenses">
                 <td class="text-nowrap font-monospace">{{ expense.period }}</td>
+
                 <td>
                   <span class="badge rounded-pill" 
                         [ngClass]="{
@@ -120,7 +127,7 @@
                           'text-bg-success': expense.status === 'Pago',
                           'text-bg-danger': expense.status === 'Exceptuado'
                         }">
-                    {{ expense.status }}
+                    {{expense.status}}
                   </span>
                 </td>
                 <td class="text-nowrap">{{ getOwnerName(expense.owner_id) }}</td>
@@ -129,14 +136,15 @@
                 <td class="text-nowrap text-end">$ {{ expense.first_expiration_amount | number:'1.2-2' }}</td>
                 <td class="text-nowrap text-end">$ {{ expense.second_expiration_amount | number:'1.2-2' }}</td>
                 <td class="text-nowrap text-end">$ {{ expense.amount_payed | number:'1.2-2' }}</td>
+
                 <td class="text-center">
-                  <button
-                    class="btn btn-light btn-sm"
-                    type="button"
+                  <button 
+                    class="btn btn-light btn-sm" 
                     data-bs-toggle="modal"
                     data-bs-target="#detallesModal"
-                    (click)="verDetalles(expense)">
-                    <i class="bi bi-three-dots-vertical"></i> 
+                    (click)="verDetalles(expense)"
+                  >
+                    Más info
                   </button>
                 </td>
               </tr>
@@ -446,104 +454,63 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="detallesModalLabel">Detalles de la Boleta</h5>
+        <h5 class="modal-title" id="detallesModalLabel">Detalles del Gasto</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body" *ngIf="selectedExpense">
         <div class="container">
-          <!-- Grid layout for better organization -->
-          <div class="row g-3">
-            <!-- Información del Propietario -->
-            <div class="col-12">
-              <div class="card">
-                <div class="card-body">
-                  <h6 class="card-title">Información del Propietario</h6>
-                  <p class="mb-0">{{ getOwnerDisplayName(selectedExpense.owner_id) }}</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Fechas de Vencimiento -->
+          <div class="row mb-3">
             <div class="col-md-6">
-              <div class="card">
-                <div class="card-body">
-                  <h6 class="card-title">Primer Vencimiento</h6>
-                  <div class="mb-2">
-                    <label class="form-label">Fecha</label>
-                    <input
-                      type="date"
-                      [(ngModel)]="updatedExpense.first_expiration_date"
-                      (change)="validateExpirationDates()"
-                      class="form-control"
-                      [max]="updatedExpense.second_expiration_date">
-                  </div>
-                  <div>
-                    <label class="form-label">Monto</label>
-                    <p class="form-control-plaintext">${{ selectedExpense.first_expiration_amount }}</p>
-                  </div>
-                </div>
-              </div>
+              <h6 class="mb-2">Información General</h6>
+              <p class="mb-1"><strong>Período:</strong> {{selectedExpense.period}}</p>
+              <p class="mb-1"><strong>Fecha de Emisión:</strong> {{selectedExpense.issueDate | date:'dd/MM/yyyy'}}</p>
+              <p class="mb-1"><strong>Estado:</strong> 
+                <span class="badge rounded-pill" 
+                      [ngClass]="{
+                        'text-bg-warning': selectedExpense.status === 'Pendiente',
+                        'text-bg-success': selectedExpense.status === 'Pago',
+                        'text-bg-danger': selectedExpense.status === 'Exceptuado'
+                      }">
+                  {{selectedExpense.status}}
+                </span>
+              </p>
             </div>
-
             <div class="col-md-6">
-              <div class="card">
-                <div class="card-body">
-                  <h6 class="card-title">Segundo Vencimiento</h6>
-                  <div class="mb-2">
-                    <label class="form-label">Fecha</label>
-                    <input
-                      type="date"
-                      [(ngModel)]="updatedExpense.second_expiration_date"
-                      (change)="validateExpirationDates()"
-                      class="form-control"
-                      [min]="updatedExpense.first_expiration_date">
-                  </div>
-                  <div>
-                    <label class="form-label">Monto</label>
-                    <input
-                      type="number"
-                      [(ngModel)]="updatedExpense.second_expiration_amount"
-                      (ngModelChange)="calculateExpirationMultiplier()"
-                      class="form-control"
-                      [min]="selectedExpense.first_expiration_amount">
-                  </div>
-                </div>
-              </div>
+              <h6 class="mb-2">Información de Pago</h6>
+              <p class="mb-1"><strong>1er Vencimiento:</strong> {{selectedExpense.first_expiration_date | date:'dd/MM/yyyy'}}</p>
+              <p class="mb-1"><strong>Monto 1er Vencimiento:</strong> ${{selectedExpense.first_expiration_amount}}</p>
+              <p class="mb-1"><strong>2do Vencimiento:</strong> {{selectedExpense.second_expiration_date | date:'dd/MM/yyyy'}}</p>
+              <p class="mb-1"><strong>Monto 2do Vencimiento:</strong> ${{selectedExpense.second_expiration_amount}}</p>
             </div>
+          </div>
 
-            <!-- Estado -->
+          <!-- Payment Information (if paid) -->
+          <div class="row mb-3" *ngIf="selectedExpense.status === 'Pago'">
             <div class="col-12">
-              <div class="card">
-                <div class="card-body">
-                  <h6 class="card-title">Estado</h6>
-                  <select
-                    [(ngModel)]="updatedExpense.status"
-                    class="form-select">
-                    <option value="Pago">Pago</option>
-                    <option value="Pendiente">Pendiente</option>
-                    <option value="Exceptuado">Exceptuado</option>
-                  </select>
-                </div>
-              </div>
+              <h6 class="mb-2">Detalles del Pago</h6>
+              <p class="mb-1"><strong>Método de Pago:</strong> {{selectedExpense.payment_method || 'No especificado'}}</p>
+              <p class="mb-1"><strong>Plataforma:</strong> {{selectedExpense.payment_platform || 'No especificada'}}</p>
+              <p class="mb-1"><strong>Monto Pagado:</strong> ${{selectedExpense.amount_payed}}</p>
+              <p class="mb-1"><strong>Fecha de Pago:</strong> {{selectedExpense.paymentDate | date:'dd/MM/yyyy'}}</p>
             </div>
+          </div>
 
-            <!-- Documentos -->
+          <!-- Document Buttons -->
+          <div class="row">
             <div class="col-12">
-              <div class="card">
-                <div class="card-body">
-                  <h6 class="card-title">Documentos</h6>
-                  <div class="d-flex gap-2">
-                    <button class="btn btn-outline-danger" (click)="openPdf(selectedExpense.id)">
-                      <i class="bi bi-file-earmark-pdf"></i> Ver Factura
-                    </button>
-                    <button
-                      class="btn btn-outline-primary"
-                      *ngIf="selectedExpense.payment_id"
-                      (click)="openReceipt(selectedExpense)">
-                      <i class="bi bi-file-earmark-text"></i> Ver Comprobante
-                    </button>
-                  </div>
-                </div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-danger" (click)="openPdf(selectedExpense.id)">
+                  <i class="bi bi-file-earmark-pdf"></i>
+                  Ver Factura
+                </button>
+                <p *ngIf="!selectedExpense.payment_id">Payment ID no disponible</p> <!-- Temporal para depuración -->
+                <button 
+                  class="btn btn-outline-primary" 
+                  *ngIf="selectedExpense.payment_id"
+                  (click)="openReceipt(selectedExpense)">
+                  <i class="bi bi-file-earmark-text"></i>
+                  Ver Comprobante
+                  </button>
               </div>
             </div>
           </div>
@@ -551,13 +518,6 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-        <button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="!hasChangesExpense()"
-          (click)="openObservationModal()">
-          Guardar Cambios
-        </button>
       </div>
     </div>
   </div>
