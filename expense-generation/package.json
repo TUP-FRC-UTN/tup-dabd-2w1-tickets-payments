@@ -22,6 +22,7 @@
     "@angular/router": "^18.2.0",
     "@angular/ssr": "^18.2.0",
     "@stripe/stripe-js": "^4.8.0",
+    "angular-google-charts": "^16.0.1",
     "express": "^4.18.2",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",

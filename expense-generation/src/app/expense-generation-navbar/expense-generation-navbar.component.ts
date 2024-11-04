@@ -21,7 +21,7 @@ export class ExpenseGenerationNavbarComponent {
   // private readonly authService = inject(AuthService);
 
   // userRoles: string[] =  this.authService.getUser().roles!; 
-  userRoles: string[] = ["FinanceManager", "Owner"] 
+  userRoles: string[] = ["FinanceManager", "Owner", "Accountant"] 
   // , "Accountant"]
 
   //Traer con el authService
@@ -54,12 +54,12 @@ export class ExpenseGenerationNavbarComponent {
         roles: ["FinanceManager"],
       
       },
-      // {
-      //   icon: "bi-bar-chart-line",
-      //   title: "Informes Financieros",
-      //   route: "expense-generation-user-view",
-      //   roles: ["Accountant"],
-      // },
+      {
+        icon: "bi-bar-chart-line",
+        title: "Informes Financieros",
+        route: "expense-generation-accountant-view",
+        roles: ["Accountant"],
+      },
       
 
       // { path: 'expense-generation-admin-view', component: ExpenseGenerationAdminViewComponent },
