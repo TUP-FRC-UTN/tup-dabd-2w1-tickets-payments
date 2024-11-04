@@ -6,7 +6,7 @@
         <!-- Filter Row -->
         <div class="row mb-3">
           <!-- Search Type and Input -->
-          <div class="col-md-3 position-relative">
+          <div class="col-md-3 position-relative" style="padding-bottom: 12px;">
             <div class="input-group">
               <input
                 type="text"
@@ -38,14 +38,49 @@
 
           <!-- Status Select -->
           <div class="col-md-2">
-            <select 
-              class="form-select"
-              [(ngModel)]="filtros.estado" 
-              (ngModelChange)="buscarBoletas()"
-            >
-              <option value="">Seleccionar estado</option>
-              <option *ngFor="let estado of estados" [value]="estado">{{ estado }}</option>
-            </select>
+            <div class="position-relative">
+              <button 
+                class="form-control d-flex justify-content-between align-items-center" 
+                type="button"
+                (click)="showStatusDropdown = !showStatusDropdown"
+                [attr.aria-expanded]="showStatusDropdown"
+              >
+                <span class="text-truncate me-2">{{ getEstadosSeleccionadosText() }}</span>
+                <i class="bi" 
+                  [class.bi-chevron-down]="!showStatusDropdown" 
+                  [class.bi-chevron-up]="showStatusDropdown">
+                </i>
+              </button>
+              
+              <ul 
+                class="dropdown-menu w-100 p-2 m-0 shadow-sm" 
+                [class.show]="showStatusDropdown"
+                (click)="$event.stopPropagation()"
+                style="max-height: 200px; overflow-y: auto;"
+              >
+                <li *ngFor="let estado of listaEstadosDisponibles" 
+                    class="dropdown-item px-2 py-1"
+                    style="cursor: pointer;"
+                >
+                  <div class="form-check m-0">
+                    <input 
+                      type="checkbox" 
+                      class="form-check-input"
+                      [id]="'estado-' + estado"
+                      [checked]="isEstadoSelected(estado)"
+                      (change)="toggleEstado(estado)"
+                    >
+                    <label 
+                      class="form-check-label ms-2 w-100" 
+                      [for]="'estado-' + estado"
+                      style="cursor: pointer;"
+                    >
+                      {{ estado }}
+                    </label>
+                  </div>
+                </li>
+              </ul>
+            </div>
           </div>
 
           <!-- Date Range -->
@@ -72,7 +107,7 @@
           </div>
           
           <!-- Action Buttons -->
-          <div class="col-md-3 d-flex gap-3 justify-content-end">
+          <div class="col-md-3 d-flex gap-3 justify-content-end" style="padding-bottom: 12px;">
             <div class="d-flex gap-1">
               <button class="btn btn-primary" data-bs-toggle="modal" title="Filtros Avanzados" data-bs-target="#filtrosAvanzados">
                 <i class="bi bi-sort-down-alt"></i>
@@ -99,14 +134,20 @@
           <table class="table table-hover border">
             <thead class="table-light">
               <tr>
-                <th class="text-nowrap">Periodo</th>
+                <th (click)="ordenarPor('period')" class="text-nowrap">
+                  Periodo
+                  <i [ngClass]="{'fa fa-sort-asc': ordenActivo === 'period' && ordenDireccion === 'asc',
+                                 'fa fa-sort-desc': ordenActivo === 'period' && ordenDireccion === 'desc',
+                                 'fa fa-sort': ordenActivo !== 'period'}"
+                     aria-hidden="true"></i>
+                </th>
                 <th>Estado</th>
                 <th class="text-nowrap">Propietario</th>
                 <th class="text-nowrap">DNI</th>
                 <th class="text-nowrap">Lote</th>
-                <th class="text-start text-nowrap">Monto Primer Pago</th>
-                <th class="text-start text-nowrap">Monto Segundo Pago</th>
-                <th class="text-start text-nowrap">Monto Pagado</th>
+                <th class="text-end text-nowrap">Monto Primer Pago</th>
+                <th class="text-end text-nowrap">Monto Segundo Pago</th>
+                <th class="text-end text-nowrap">Monto Pagado</th>
                 <th class="text-center">Acciones</th>
               </tr>
             </thead>
@@ -128,7 +169,7 @@
                 <td class="text-nowrap">{{ getOwnerPlots(expense.owner_id) }}</td>
                 <td class="text-nowrap text-end">$ {{ expense.first_expiration_amount | number:'1.2-2' }}</td>
                 <td class="text-nowrap text-end">$ {{ expense.second_expiration_amount | number:'1.2-2' }}</td>
-                <td class="text-nowrap text-end">$ {{ expense.amount_payed | number:'1.2-2' }}</td>
+                <td class="text-nowrap text-end">$ {{ expense.actual_amount | number:'1.2-2' }}</td>
                 <td class="text-center">
                   <button
                     class="btn btn-light btn-sm"
@@ -153,6 +194,7 @@
                 style="width: auto"
                 [(ngModel)]="itemsPerPage" 
                 (change)="onItemsPerPageChange()">
+                <option [value]="5">5</option>
                 <option [value]="10">10</option>
                 <option [value]="25">25</option>
                 <option [value]="50">50</option>
@@ -228,7 +270,7 @@
               <div class="modal-content">
                 <div class="modal-header">
                   <h5 class="modal-title" id="multipliersModalLabel">Configuración de Expensas</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="onModalClose()" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                   <!-- Spinner de carga -->
@@ -237,12 +279,12 @@
                       <span class="visually-hidden">Cargando...</span>
                     </div>
                   </div>
-      
+
                   <!-- Mensaje de error -->
                   <div *ngIf="multiplierError" class="alert alert-danger">
                     {{ multiplierError }}
                   </div>
-      
+
                   <!-- Formulario -->
                   <div [class.d-none]="isLoadingMultipliers">
                     <!-- Día de Generación -->
@@ -257,6 +299,10 @@
                           min="1"
                           max="28"
                           [class.is-invalid]="!isValidGenerationDay()"
+                          [disabled]="!!fieldModified && fieldModified !== 'generationDay'"
+                          (focus)="onFieldFocus('generationDay')"
+                          (blur)="onFieldBlur()"
+                          (ngModelChange)="onFieldChange('generationDay')"
                         />
                         <span class="input-group-text">del mes</span>
                       </div>
@@ -264,9 +310,9 @@
                         El día debe estar entre 1 y 28
                       </div>
                     </div>
-      
+
                     <hr class="my-4">
-      
+
                     <!-- Multiplicadores -->
                     <div class="mb-3">
                       <label for="latePaymentInput" class="form-label">Porcentaje de pagos atrasados:</label>
@@ -278,12 +324,15 @@
                           class="form-control"
                           min="0"
                           max="100"
-                          (ngModelChange)="updateMultiplierFromPercentage('latePayment', $event)"
+                          [disabled]="!!fieldModified && fieldModified !== 'latePayment'"
+                          (focus)="onFieldFocus('latePayment')"
+                          (blur)="onFieldBlur()"
+                          (ngModelChange)="onFieldChange('latePayment')"
                         />
                         <span class="input-group-text">%</span>
                       </div>
                     </div>
-      
+
                     <div class="mb-3">
                       <label for="expirationInput" class="form-label">Porcentaje de vencimiento:</label>
                       <div class="input-group">
@@ -294,7 +343,10 @@
                           class="form-control"
                           min="0"
                           max="100"
-                          (ngModelChange)="updateMultiplierFromPercentage('expiration', $event)"
+                          [disabled]="!!fieldModified && fieldModified !== 'expiration'"
+                          (focus)="onFieldFocus('expiration')"
+                          (blur)="onFieldBlur()"
+                          (ngModelChange)="onFieldChange('expiration')"
                         />
                         <span class="input-group-text">%</span>
                       </div>
@@ -302,12 +354,12 @@
                   </div>
                 </div>
                 <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="onModalClose()">Cerrar</button>
                   <button
                     type="button"
                     class="btn btn-primary"
                     (click)="handleSaveClick()"
-                    [disabled]="isLoadingMultipliers || (!hasChanges() && generationDay === originalGenerationDay) || !isValidGenerationDay()"
+                    [disabled]="isLoadingMultipliers || !fieldModified || !isValidGenerationDay()"
                   >
                     Guardar
                   </button>
@@ -419,15 +471,37 @@
         </div>
         <div class="mb-3">
           <label for="periodo" class="form-label">Periodo</label>
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownPeriodos" data-bs-toggle="dropdown" aria-expanded="false">
+              Seleccionar Periodos
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownPeriodos">
+              <li *ngFor="let periodo of periodos">
+                <div class="form-check">
+                  <input 
+                    class="form-check-input" 
+                    type="checkbox" 
+                    [value]="periodo.value" 
+                    (change)="togglePeriodoSeleccionado(periodo.value)" 
+                    [checked]="filtros.periodoSeleccionados.includes(periodo.value)">
+                  <label class="form-check-label">
+                    {{ periodo.label }}
+                  </label>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label for="typedoc" class="form-label">Tipo Documento</label>
           <select 
             class="form-select" 
-            id="periodo"
-            [(ngModel)]="filtros.periodo"
-            name="periodo"
+            id="doc"
+            [(ngModel)]="filtros.typedoc"
+            name="doc"
           >
-            <option [ngValue]="null">Todos los periodos</option>
-            <option *ngFor="let periodo of periodos" [value]="periodo">
-              {{periodo}}
+            <option *ngFor="let doc of typedoc" [value]="doc">
+              {{doc}}
             </option>
           </select>
         </div>

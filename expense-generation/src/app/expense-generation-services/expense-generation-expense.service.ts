@@ -117,7 +117,7 @@ updateExpense(expenseData: ExpenseUpdateDTO, observation: string): Observable<an
     .set('Content-Type', 'application/json')
     .set('X-Update-Observation', observation);
 
-  return this.http.put(`${this.ApiBaseUrl}/${expenseData.id}`, expenseData, { headers })
+  return this.http.put(`http://localhost:8021/api/expenses/update`, expenseData, { headers })
     .pipe(
       catchError(this.handleError)
     );

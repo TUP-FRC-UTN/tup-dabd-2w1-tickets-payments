@@ -39,7 +39,6 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
       first_expiration_date: expense.first_expiration_date,
       second_expiration_date: expense.second_expiration_date,
       second_expiration_amount: expense.second_expiration_amount,
-      expiration_multiplier: 1
     };
   }
   visiblePages: number[] = [];
@@ -59,7 +58,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
   expirationMultiplier: number = 0;
   isLoadingMultipliers: boolean = false;
   multiplierError: string | null = null;
-  itemsPerPage: number = 10;
+  itemsPerPage: number = 5;
   currentPage: number = 1;
   totalItems: number = 0;
   totalPages: number = 0;
@@ -87,22 +86,140 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
 
   @ViewChild('searchInput') searchInput!: ElementRef;
   @ViewChild('multipliersModal') multipliersModal!: ElementRef;
-  periodos = Array.from({length: 12}, (_, i) => i + 1);
+  periodos = [
+    { value: 1, label: '1 - Enero' },
+    { value: 2, label: '2 - Febrero' },
+    { value: 3, label: '3 - Marzo' },
+    { value: 4, label: '4 - Abril' },
+    { value: 5, label: '5 - Mayo' },
+    { value: 6, label: '6 - Junio' },
+    { value: 7, label: '7 - Julio' },
+    { value: 8, label: '8 - Agosto' },
+    { value: 9, label: '9 - Septiembre' },
+    { value: 10, label: '10 - Octubre' },
+    { value: 11, label: '11 - Noviembre' },
+    { value: 12, label: '12 - Diciembre' }
+  ];
+  listaEstadosDisponibles: string[] = [
+    'Pendiente',
+    'Pago',
+    'Exceptuado'
+  ];
+  typedoc = ['DNI','CUIT/CUIL','PASAPORTE'];
   filtros = {
   desde: '',
   hasta: '',
   estado: '',
   montoMinimo: null as number | null,
-  periodo: null as number | null
+  periodo: null as number | null,
+  typedoc : '',
+  periodoSeleccionados: [] as number[],
   };
   multiplier: number = 1;
 
 
   estados = ['Pendiente', 'Pago', 'Exceptuado'];
-
+  showStatusDropdown = false;
   constructor(private expenseService: ExpenseGenerationExpenseService) {}
 
+  originalLatePaymentPercentage: number = 0;
+  originalExpirationPercentage: number = 0;
 
+  // Control de campos
+  fieldModified: 'generationDay' | 'latePayment' | 'expiration' | null = null;
+  activeField: 'generationDay' | 'latePayment' | 'expiration' | null = null;
+
+  onFieldFocus(fieldName: 'generationDay' | 'latePayment' | 'expiration'): void {
+    if (!this.fieldModified || this.fieldModified === fieldName) {
+      this.activeField = fieldName;
+    }
+  }
+
+  togglePeriodoSeleccionado(mes: number) {
+    const index = this.filtros.periodoSeleccionados.indexOf(mes);
+    if (index === -1) {
+      this.filtros.periodoSeleccionados.push(mes);
+    } else {
+      this.filtros.periodoSeleccionados.splice(index, 1);
+    }
+  }
+
+  toggleEstado(estado: string) {
+    const estadosSeleccionados = this.filtros.estado ? this.filtros.estado.split(',') : [];
+    const index = estadosSeleccionados.indexOf(estado);
+    
+    if (index === -1) {
+      estadosSeleccionados.push(estado);
+    } else {
+      estadosSeleccionados.splice(index, 1);
+    }
+  
+    this.filtros.estado = estadosSeleccionados.join(',');
+    this.buscarBoletas();
+  }
+  isEstadoSelected(estado: string): boolean {
+    const estadosSeleccionados = this.filtros.estado ? this.filtros.estado.split(',') : [];
+    return estadosSeleccionados.includes(estado);
+  }
+
+  getEstadosSeleccionadosText(): string {
+    return this.filtros.estado ? this.filtros.estado : 'Seleccionar estado';
+  }
+  
+  
+  onBlur() {
+    setTimeout(() => {
+      this.showStatusDropdown = false;
+    }, 200);
+  }
+loadOriginalValues(data: any) {
+  this.originalGenerationDay = data.generationDay;
+  this.originalLatePaymentPercentage = data.latePaymentPercentage;
+  this.originalExpirationPercentage = data.expirationPercentage;
+  
+  // Establecer valores actuales
+  this.generationDay = this.originalGenerationDay;
+  this.latePaymentPercentage = this.originalLatePaymentPercentage;
+  this.expirationPercentage = this.originalExpirationPercentage;
+}
+
+  
+
+isFieldModified(fieldName: 'generationDay' | 'latePayment' | 'expiration'): boolean {
+  switch (fieldName) {
+    case 'generationDay':
+      return this.generationDay !== this.originalGenerationDay;
+    case 'latePayment':
+      return this.latePaymentPercentage !== this.originalLatePaymentPercentage;
+    case 'expiration':
+      return this.expirationPercentage !== this.originalExpirationPercentage;
+  }
+}
+
+
+
+onFieldBlur(): void {
+  this.activeField = null;
+}
+
+onFieldChange(fieldName: 'generationDay' | 'latePayment' | 'expiration'): void {
+  if (this.isFieldModified(fieldName)) {
+    this.fieldModified = fieldName;
+  } else {
+    this.fieldModified = null;
+  }
+}
+
+resetFieldState(): void {
+  this.fieldModified = null;
+  this.activeField = null;
+} 
+resetAllValues(): void {
+  this.generationDay = this.originalGenerationDay;
+  this.latePaymentPercentage = this.originalLatePaymentPercentage;
+  this.expirationPercentage = this.originalExpirationPercentage;
+  this.resetFieldState();
+}
 
   loadOwnerNames(ownerIds: number[]) {
     const validOwnerIds = ownerIds.filter(id => id !== undefined && id !== null);
@@ -131,6 +248,17 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
     this.filteredUsers = [];
     this.selectedOwner = null;
   }
+
+  onModalClose(): void {
+    this.resetAllValues();
+  }
+
+  hasUnsavedChanges(): boolean {
+    return this.isFieldModified('generationDay') || 
+           this.isFieldModified('latePayment') || 
+           this.isFieldModified('expiration');
+  }
+
   ngOnInit() {
     const today = new Date();
     const lastMonth = new Date();
@@ -278,6 +406,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
     return this.generationDay >= 1 && this.generationDay <= 28;
   }
 
+
   hasChangesExpense(): boolean {
     if (!this.selectedExpense) return false;
     
@@ -357,11 +486,27 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
   }
   
   refreshExpensesList() {
-    // Emit event to parent component to refresh the list
-    // You'll need to implement this based on your application's structure
   }
 
-  
+  ordenActivo: string = '';
+  ordenDireccion: 'asc' | 'desc' | '' = ''; 
+
+ordenarPor(campo: string) {
+  if (this.ordenActivo === campo) {
+    if (this.ordenDireccion === 'asc') {
+      this.ordenDireccion = 'desc';
+    } else if (this.ordenDireccion === 'desc') {
+      this.ordenActivo = '';
+      this.ordenDireccion = '';
+    } else {
+      this.ordenDireccion = 'asc';
+    }
+  } else {
+    this.ordenActivo = campo;
+    this.ordenDireccion = 'asc';
+  }
+
+}
 
   hasChanges(): boolean {
     const hasMultiplierChanges = 
@@ -389,6 +534,14 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
     }
     
     return changes;
+  }
+  filtrosSeleccionados: string[] = [];
+  onEstadoChange(): void {
+    this.filtrosSeleccionados = this.filtrosSeleccionados.filter(
+      (estado, index, self) => self.indexOf(estado) === index 
+    );  
+    this.filtros.estado = this.filtrosSeleccionados.join(',');
+    this.buscarBoletas(); 
   }
 
   handleSaveClick() {
@@ -426,7 +579,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
     const updatedValues: any = {};
 
     // Preparar las solicitudes solo para los valores que han cambiado
-    if (this.latePaymentPercentage !== this.originalLatePayment * 100) {
+    if (this.latePaymentPercentage !== this.originalLatePayment * 100 || this.expirationPercentage !== this.originalExpiration * 100 || this.generationDay !== this.originalGenerationDay) {
       updatedValues.latePayment = this.latePaymentPercentage / 100;
       requests.push(
         this.expenseService.updateLatePaymentMultiplier(
@@ -434,6 +587,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
           this.observation
         )
       );
+      
     }
 
     if (this.expirationPercentage !== this.originalExpiration * 100) {
@@ -465,6 +619,8 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
       });
       return;
     }
+
+    
 
     // Mostrar loading
     Swal.fire({
@@ -621,6 +777,34 @@ validateDates() {
     return this.ownerNames[ownerId] || `Cargando... (${ownerId})`;
   }
 
+  periodosFormateados: { value: string; label: string }[] = [];
+
+  // Inicializa y formatea los períodos
+  initializePeriodos() {
+    // Obtener períodos únicos de las expenses
+    const uniquePeriods = [...new Set(
+      this.ownersWithExpenses
+        .flatMap(owner => owner.expenses)
+        .map(expense => expense.period)
+    )].sort().reverse();
+
+    // Formatear los períodos
+    this.periodosFormateados = uniquePeriods.map(period => ({
+      value: period,
+      label: this.formatearPeriodo(period)
+    }));
+  }
+
+  // Formatea el periodo de "2024-10" a "Octubre 2024"
+  formatearPeriodo(periodo: string): string {
+    const [year, month] = periodo.split('-');
+    const meses = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    return `${meses[parseInt(month) - 1]} ${year}`;
+  }
+
   limpiarFiltros() {
     const today = new Date();
     const lastMonth = new Date();
@@ -631,7 +815,9 @@ validateDates() {
       hasta: today.toISOString().split('T')[0],
       estado: '',
       montoMinimo: null,
-      periodo: null
+      periodo: null,
+      typedoc: '',
+      periodoSeleccionados: [],
     };
     this.searchTerm = '';
     this.selectedOwner = null;
@@ -674,7 +860,7 @@ validateDates() {
     this.buscarBoletas();
   }
 
-
+ 
   buscarBoletas() {
     this.currentPage = 1;
     this.isLoading = true;
@@ -703,8 +889,9 @@ validateDates() {
     const uniqueOwnerIds = [...new Set(filteredExpenses.map(expense => expense.owner_id))];
     this.loadOwnerNames(uniqueOwnerIds);
     if (this.filtros.estado) {
-      filteredExpenses = filteredExpenses.filter(expense => 
-        expense.status === this.filtros.estado
+      const estadosSeleccionados = this.filtros.estado.split(',');
+      filteredExpenses = filteredExpenses.filter(expense =>
+        estadosSeleccionados.includes(expense.status)
       );
     }
 
@@ -719,10 +906,10 @@ validateDates() {
         new Date(expense.issueDate) <= new Date(this.filtros.hasta)
       );
     }
-    if (this.filtros.periodo) {
+    if (this.filtros.periodoSeleccionados.length > 0) {
       filteredExpenses = filteredExpenses.filter(expense => {
-        const expenseMonth = parseInt(expense.period.split('-')[1], 10); 
-        return expenseMonth === this.filtros.periodo; 
+        const expenseMonth = parseInt(expense.period.split('-')[1], 10);
+        return this.filtros.periodoSeleccionados.includes(expenseMonth);
       });
     }
     if (this.filtros.montoMinimo) {
@@ -730,6 +917,8 @@ validateDates() {
         expense.first_expiration_amount >= this.filtros.montoMinimo!
       );
     }
+
+    
 
     filteredExpenses.sort((a, b) => {
       if (a.status === 'Pendiente' && b.status !== 'Pendiente') return -1;

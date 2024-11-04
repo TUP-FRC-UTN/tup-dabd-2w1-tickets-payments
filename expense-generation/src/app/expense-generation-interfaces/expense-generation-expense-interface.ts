@@ -2,6 +2,7 @@ export interface ExpenseGenerationExpenseInterface {
 
     id: number;
     owner_id : number;
+    dni_type : string;
     period: string;
     issueDate: Date;
     status: string;
