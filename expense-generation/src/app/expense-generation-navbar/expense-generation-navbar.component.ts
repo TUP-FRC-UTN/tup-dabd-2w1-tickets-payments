@@ -21,11 +21,11 @@ export class ExpenseGenerationNavbarComponent {
   // private readonly authService = inject(AuthService);
 
   // userRoles: string[] =  this.authService.getUser().roles!; 
-  userRoles: string[] = ["FinanceManager", "Owner"] 
+  userRoles: string[] = ["FinanceManager", "Owner", "Accountant"] 
   // , "Accountant"]
 
   //Traer con el authService
-  actualRole : string = "FinanceManager"
+  actualRole : string = ""
   //Lista de botones
   buttonsList: SideButton[] = [];
 
@@ -54,12 +54,12 @@ export class ExpenseGenerationNavbarComponent {
         roles: ["FinanceManager"],
       
       },
-      // {
-      //   icon: "bi-bar-chart-line",
-      //   title: "Informes Financieros",
-      //   route: "expense-generation-user-view",
-      //   roles: ["Accountant"],
-      // },
+      {
+        icon: "bi-bar-chart-line",
+        title: "Informes Financieros",
+        route: "expense-generation-accountant-view",
+        roles: ["Accountant"],
+      },
       
 
       // { path: 'expense-generation-admin-view', component: ExpenseGenerationAdminViewComponent },
@@ -92,8 +92,10 @@ export class ExpenseGenerationNavbarComponent {
     this.actualRole = role;
     if(role === "FinanceManager"){
       this.router.navigate(['/expense-generation-admin-view']);
-    }else{
+    }else if(role === "Owner"){
       this.router.navigate(['/expense-generation-user-view']);
+    }else if(role === "Accountant"){
+      this.router.navigate(['/expense-generation-accountant-view']);
     }
   }
 

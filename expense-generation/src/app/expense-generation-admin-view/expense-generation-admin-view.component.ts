@@ -9,7 +9,17 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import autoTable from 'jspdf-autotable';
+import { forkJoin } from 'rxjs/internal/observable/forkJoin';
+import { firstValueFrom } from 'rxjs/internal/firstValueFrom';
+import Swal from 'sweetalert2';
+import { Observable } from 'rxjs/internal/Observable';
+declare var window: any;
 
+interface MultiplierData {
+  latePayment: number;
+  expiration: number;
+  generationDay: number;
+}
 
 @Component({
   selector: 'app-expense-generation-admin-view',
@@ -21,12 +31,18 @@ import autoTable from 'jspdf-autotable';
 })
 export class ExpenseGenerationAdminViewComponent implements OnInit {
   selectedExpense: ExpenseGenerationExpenseInterface | null = null;
-  async verDetalles(expense: ExpenseGenerationExpenseInterface) {
+  seeDetails(expense: ExpenseGenerationExpenseInterface) {
     this.selectedExpense = expense;
+    this.updatedExpense = {
+      id: expense.id,
+      status: expense.status,
+      first_expiration_date: expense.first_expiration_date,
+      second_expiration_date: expense.second_expiration_date,
+      second_expiration_amount: expense.second_expiration_amount,
+    };
   }
   visiblePages: number[] = [];
   pagedExpenses: any[] = [];
-
   isLoading: boolean = false;
   error: string | null = null;
   expenses: ExpenseGenerationExpenseInterface[] = [];
@@ -42,51 +58,172 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
   expirationMultiplier: number = 0;
   isLoadingMultipliers: boolean = false;
   multiplierError: string | null = null;
-  itemsPerPage: number = 10;
+  itemsPerPage: number = 5;
   currentPage: number = 1;
   totalItems: number = 0;
   totalPages: number = 0;
   observation: string = '';
-  
+
   // Valores originales (desde la BD)
   originalLatePayment: number = 0;
   originalExpiration: number = 0;
-  
+
   // Valores actuales en porcentaje
   latePaymentPercentage: number = 0;
   expirationPercentage: number = 0;
 
   // Valores originales
   originalGenerationDay: number = 1;
-  
+
   // Valores actuales
   generationDay: number = 1;
-  
-  
+
+
   updatedExpense: any = {};
   detallesModal: any;
   observationModal: any;
-  
 
 
   @ViewChild('searchInput') searchInput!: ElementRef;
-
-  periodos = Array.from({length: 12}, (_, i) => i + 1);
-  filtros = {
-  desde: '',
-  hasta: '',
-  estado: '',
-  montoMinimo: null as number | null,
-  periodo: null as number | null  
+  @ViewChild('multipliersModal') multipliersModal!: ElementRef;
+  periodos = [
+    { value: 1, label: '1 - Enero' },
+    { value: 2, label: '2 - Febrero' },
+    { value: 3, label: '3 - Marzo' },
+    { value: 4, label: '4 - Abril' },
+    { value: 5, label: '5 - Mayo' },
+    { value: 6, label: '6 - Junio' },
+    { value: 7, label: '7 - Julio' },
+    { value: 8, label: '8 - Agosto' },
+    { value: 9, label: '9 - Septiembre' },
+    { value: 10, label: '10 - Octubre' },
+    { value: 11, label: '11 - Noviembre' },
+    { value: 12, label: '12 - Diciembre' }
+  ];
+  listStatus: string[] = [
+    'Pendiente',
+    'Pago',
+    'Exceptuado'
+  ];
+  typedoc = ['DNI', 'CUIT/CUIL', 'PASAPORTE'];
+  filter = {
+    from: '',
+    until: '',
+    status: '',
+    minimumAmount: null as number | null,
+    period: null as number | null,
+    typedoc: '',
+    selectedPeriod: [] as number[],
   };
+  multiplier: number = 1;
 
-  estados = ['Pendiente', 'Pago', 'Exceptuado'];
 
-  constructor(private expenseService: ExpenseGenerationExpenseService) {}
+  status = ['Pendiente', 'Pago', 'Exceptuado'];
+  showStatusDropdown = false;
+  constructor(private expenseService: ExpenseGenerationExpenseService) { }
+
+  originalLatePaymentPercentage: number = 0;
+  originalExpirationPercentage: number = 0;
+
+  // Control de campos
+  fieldModified: 'generationDay' | 'latePayment' | 'expiration' | null = null;
+  activeField: 'generationDay' | 'latePayment' | 'expiration' | null = null;
+
+  onFieldFocus(fieldName: 'generationDay' | 'latePayment' | 'expiration'): void {
+    if (!this.fieldModified || this.fieldModified === fieldName) {
+      this.activeField = fieldName;
+    }
+  }
+
+  toggleSelectedPeriod(month: number) {
+    const index = this.filter.selectedPeriod.indexOf(month);
+    if (index === -1) {
+      this.filter.selectedPeriod.push(month);
+    } else {
+      this.filter.selectedPeriod.splice(index, 1);
+    }
+  }
+
+  toggleStatus(status: string) {
+    const selectedStatus = this.filter.status ? this.filter.status.split(',') : [];
+    const index = selectedStatus.indexOf(status);
+
+    if (index === -1) {
+      selectedStatus.push(status);
+    } else {
+      selectedStatus.splice(index, 1);
+    }
+
+    this.filter.status = selectedStatus.join(',');
+    this.searchTickets();
+  }
+  isSelectedStatus(status: string): boolean {
+    const selectedStatus = this.filter.status ? this.filter.status.split(',') : [];
+    return selectedStatus.includes(status);
+  }
+
+  getSelectedStatusText(): string {
+    return this.filter.status ? this.filter.status : 'Seleccionar estado';
+  }
+
+
+  onBlur() {
+    setTimeout(() => {
+      this.showStatusDropdown = false;
+    }, 200);
+  }
+  loadOriginalValues(data: any) {
+    this.originalGenerationDay = data.generationDay;
+    this.originalLatePaymentPercentage = data.latePaymentPercentage;
+    this.originalExpirationPercentage = data.expirationPercentage;
+
+    // Establecer valores actuales
+    this.generationDay = this.originalGenerationDay;
+    this.latePaymentPercentage = this.originalLatePaymentPercentage;
+    this.expirationPercentage = this.originalExpirationPercentage;
+  }
+
+
+
+  isFieldModified(fieldName: 'generationDay' | 'latePayment' | 'expiration'): boolean {
+    switch (fieldName) {
+      case 'generationDay':
+        return this.generationDay !== this.originalGenerationDay;
+      case 'latePayment':
+        return this.latePaymentPercentage !== this.originalLatePaymentPercentage;
+      case 'expiration':
+        return this.expirationPercentage !== this.originalExpirationPercentage;
+    }
+  }
+
+
+
+  onFieldBlur(): void {
+    this.activeField = null;
+  }
+
+  onFieldChange(fieldName: 'generationDay' | 'latePayment' | 'expiration'): void {
+    if (this.isFieldModified(fieldName)) {
+      this.fieldModified = fieldName;
+    } else {
+      this.fieldModified = null;
+    }
+  }
+
+  resetFieldState(): void {
+    this.fieldModified = null;
+    this.activeField = null;
+  }
+  resetAllValues(): void {
+    this.generationDay = this.originalGenerationDay;
+    this.latePaymentPercentage = this.originalLatePaymentPercentage;
+    this.expirationPercentage = this.originalExpirationPercentage;
+    this.resetFieldState();
+  }
 
   loadOwnerNames(ownerIds: number[]) {
     const validOwnerIds = ownerIds.filter(id => id !== undefined && id !== null);
-    
+
     validOwnerIds.forEach(id => {
       if (!this.ownerNames[id]) {
         this.expenseService.GetOwnerById(id).subscribe({
@@ -105,19 +242,30 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
       }
     });
   }
-  
+
   clearSearch() {
     this.searchTerm = '';
     this.filteredUsers = [];
     this.selectedOwner = null;
   }
+
+  onModalClose(): void {
+    this.resetAllValues();
+  }
+
+  hasUnsavedChanges(): boolean {
+    return this.isFieldModified('generationDay') ||
+      this.isFieldModified('latePayment') ||
+      this.isFieldModified('expiration');
+  }
+
   ngOnInit() {
     const today = new Date();
     const lastMonth = new Date();
     lastMonth.setMonth(lastMonth.getMonth() - 3);
-  
-    this.filtros.hasta = today.toISOString().split('T')[0];
-    this.filtros.desde = lastMonth.toISOString().split('T')[0];
+
+    this.filter.until = today.toISOString().split('T')[0];
+    this.filter.from = lastMonth.toISOString().split('T')[0];
 
     // Cargar datos iniciales
     this.loadInitialData();
@@ -125,7 +273,6 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
     // Initialize modals
     this.detallesModal = new window.bootstrap.Modal(document.getElementById('detallesModal'));
     this.observationModal = new window.bootstrap.Modal(document.getElementById('observationModal'));
-
   }
 
   loadInitialData() {
@@ -139,31 +286,31 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
     this.expenseService.getAllOwnersWithExpenses().subscribe({
       next: (data) => {
         this.ownersWithExpenses = data;
-        
+
         // Crear el mapa de propietarios
         this.ownerMap = new Map(
           data.map(item => [item.owner.id, item.owner])
         );
-        
+
         // Extraer todos los propietarios
         this.allOwners = data.map(item => item.owner);
-        
+
         // Extraer todas las boletas y aplicar filtros iniciales
         const allExpenses = data.flatMap(item => item.expenses);
-        
+
         // Verificar si hay boletas
         if (allExpenses.length === 0) {
           this.error = 'No se encontraron boletas en el sistema';
         } else {
           this.applyFiltersToExpenses(allExpenses);
         }
-        
+
         // Cargar los nombres de los propietarios
         const uniqueOwnerIds = [...new Set(allExpenses.map(expense => expense.owner_id))];
         this.loadOwnerNames(uniqueOwnerIds);
-        
+
         this.isLoading = false;
-        
+
         // Actualizar la paginación
         this.loadExpenses();
       },
@@ -249,7 +396,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
   }
 
   onItemsPerPageChange() {
-    this.currentPage = 1; 
+    this.currentPage = 1;
     this.calculateTotalPages();
     this.updateVisiblePages();
     this.updatePagedExpenses();
@@ -259,9 +406,10 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
     return this.generationDay >= 1 && this.generationDay <= 28;
   }
 
+
   hasChangesExpense(): boolean {
     if (!this.selectedExpense) return false;
-    
+
     return (
       this.updatedExpense.status !== this.selectedExpense.status ||
       this.updatedExpense.first_expiration_date !== this.selectedExpense.first_expiration_date ||
@@ -336,40 +484,64 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
       }
     });
   }
-  
+
   refreshExpensesList() {
-    // Emit event to parent component to refresh the list
-    // You'll need to implement this based on your application's structure
   }
 
-  
+  activeOrder: string = '';
+  directionOrder: 'asc' | 'desc' | '' = '';
+
+  ordenarPor(campo: string) {
+    if (this.activeOrder === campo) {
+      if (this.directionOrder === 'asc') {
+        this.directionOrder = 'desc';
+      } else if (this.directionOrder === 'desc') {
+        this.activeOrder = '';
+        this.directionOrder = '';
+      } else {
+        this.directionOrder = 'asc';
+      }
+    } else {
+      this.activeOrder = campo;
+      this.directionOrder = 'asc';
+    }
+
+  }
 
   hasChanges(): boolean {
-    const hasMultiplierChanges = 
+    const hasMultiplierChanges =
       this.latePaymentPercentage !== this.originalLatePayment * 100 ||
       this.expirationPercentage !== this.originalExpiration * 100;
-    
+
     const hasGenerationDayChanges = this.generationDay !== this.originalGenerationDay;
-    
+
     return hasMultiplierChanges || hasGenerationDayChanges;
   }
 
   getChangeSummary(): string[] {
     const changes: string[] = [];
-    
+
     if (this.latePaymentPercentage !== this.originalLatePayment * 100) {
       changes.push(`Multiplicador de pagos atrasados: ${(this.originalLatePayment * 100).toFixed(1)}% → ${this.latePaymentPercentage.toFixed(1)}%`);
     }
-    
+
     if (this.expirationPercentage !== this.originalExpiration * 100) {
       changes.push(`Multiplicador de vencimiento: ${(this.originalExpiration * 100).toFixed(1)}% → ${this.expirationPercentage.toFixed(1)}%`);
     }
-    
+
     if (this.generationDay !== this.originalGenerationDay) {
       changes.push(`Día de generación: ${this.originalGenerationDay} → ${this.generationDay}`);
     }
-    
+
     return changes;
+  }
+  selectedFilters: string[] = [];
+  onEstadoChange(): void {
+    this.selectedFilters = this.selectedFilters.filter(
+      (status, index, self) => self.indexOf(status) === index
+    );
+    this.filter.status = this.selectedFilters.join(',');
+    this.searchTickets();
   }
 
   handleSaveClick() {
@@ -407,7 +579,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
     const updatedValues: any = {};
 
     // Preparar las solicitudes solo para los valores que han cambiado
-    if (this.latePaymentPercentage !== this.originalLatePayment * 100) {
+    if (this.latePaymentPercentage !== this.originalLatePayment * 100 || this.expirationPercentage !== this.originalExpiration * 100 || this.generationDay !== this.originalGenerationDay) {
       updatedValues.latePayment = this.latePaymentPercentage / 100;
       requests.push(
         this.expenseService.updateLatePaymentMultiplier(
@@ -415,6 +587,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
           this.observation
         )
       );
+
     }
 
     if (this.expirationPercentage !== this.originalExpiration * 100) {
@@ -447,6 +620,8 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
       return;
     }
 
+
+
     // Mostrar loading
     Swal.fire({
       title: 'Guardando cambios',
@@ -461,7 +636,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
     forkJoin(requests).subscribe({
       next: (responses) => {
         console.log('Respuestas:', responses);
-        
+
         // Actualizar valores originales con los nuevos valores
         if (updatedValues.latePayment !== undefined) {
           this.originalLatePayment = updatedValues.latePayment;
@@ -475,7 +650,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
 
         // Cerrar modales
         this.closeAllModals();
-        
+
         // Limpiar observación
         this.observation = '';
 
@@ -502,7 +677,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
     });
   }
 
-  
+
   showConfirmation() {
     Swal.fire({
       title: 'Cambios guardados',
@@ -514,7 +689,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
       this.closeModal();
     });
   }
-  
+
   closeModal() {
     this.observation = '';
     const modal = document.getElementById('multipliersModal');
@@ -526,7 +701,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
   updateMultiplierFromPercentage(field: 'latePayment' | 'expiration', value: number) {
     if (value < 0) value = 0;
     if (value > 100) value = 100;
-    
+
     if (field === 'latePayment') {
       this.latePaymentPercentage = value;
     } else if (field === 'expiration') {
@@ -556,19 +731,19 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
   }
 
 
-validateDates() {
-  const desde = new Date(this.filtros.desde);
-  const hasta = new Date(this.filtros.hasta);
-  const today = new Date();
+  validateDates() {
+    const from = new Date(this.filter.from);
+    const until = new Date(this.filter.until);
+    const today = new Date();
 
-  if (hasta < desde) {
-    this.filtros.hasta = this.filtros.desde;
-  }
+    if (until < from) {
+      this.filter.until = this.filter.from;
+    }
 
-  if (hasta > today) {
-    this.filtros.hasta = today.toISOString().split('T')[0];
+    if (until > today) {
+      this.filter.until = today.toISOString().split('T')[0];
+    }
   }
-}
 
   loadAllOwnersWithExpenses() {
     this.isLoading = true;
@@ -577,14 +752,14 @@ validateDates() {
     this.expenseService.getAllOwnersWithExpenses().subscribe({
       next: (data) => {
         this.ownersWithExpenses = data;
-        
+
         this.ownerMap = new Map(
           data.map(item => [item.owner.id, item.owner])
         );
-        
+
         const allExpenses = data.flatMap(item => item.expenses);
         this.applyFiltersToExpenses(allExpenses);
-        
+
         this.allOwners = data.map(item => item.owner);
         this.isLoading = false;
       },
@@ -594,7 +769,7 @@ validateDates() {
       }
     });
   }
-  
+
   getOwnerDisplayName(ownerId: number | undefined): string {
     if (ownerId === undefined || ownerId === null) {
       return 'Propietario no asignado';
@@ -602,17 +777,47 @@ validateDates() {
     return this.ownerNames[ownerId] || `Cargando... (${ownerId})`;
   }
 
-  limpiarFiltros() {
+  formattedPeriod: { value: string; label: string }[] = [];
+
+  // Inicializa y formatea los períodos
+  initializePeriodos() {
+    // Obtener períodos únicos de las expenses
+    const uniquePeriods = [...new Set(
+      this.ownersWithExpenses
+        .flatMap(owner => owner.expenses)
+        .map(expense => expense.period)
+    )].sort().reverse();
+
+    // Formatear los períodos
+    this.formattedPeriod = uniquePeriods.map(period => ({
+      value: period,
+      label: this.formatPeriod(period)
+    }));
+  }
+
+  // Formatea el periodo de "2024-10" a "Octubre 2024"
+  formatPeriod(period: string): string {
+    const [year, month] = period.split('-');
+    const months = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    return `${months[parseInt(month) - 1]} ${year}`;
+  }
+
+  cleanFilters() {
     const today = new Date();
     const lastMonth = new Date();
     lastMonth.setMonth(lastMonth.getMonth() - 3);
-  
-    this.filtros = {
-      desde: lastMonth.toISOString().split('T')[0],
-      hasta: today.toISOString().split('T')[0],
-      estado: '',
-      montoMinimo: null,
-      periodo: null
+
+    this.filter = {
+      from: lastMonth.toISOString().split('T')[0],
+      until: today.toISOString().split('T')[0],
+      status: '',
+      minimumAmount: null,
+      period: null,
+      typedoc: '',
+      selectedPeriod: [],
     };
     this.searchTerm = '';
     this.selectedOwner = null;
@@ -621,42 +826,42 @@ validateDates() {
     this.loadAllOwnersWithExpenses();
   }
 
-  
+
 
   getPlotNumbers(owner: Owner): string {
     if (!owner.plots || owner.plots.length === 0) return 'Sin lotes';
-    return owner.plots.map(plot => `${plot.plotNumber}`).join(', ');
+    return owner.plots.map(plot => `${plot.plot_number}`).join(', ');
   }
 
-  buscarUsuarios() {
-    if (this.searchTerm.length < 2) {
-      this.filteredUsers = [];
+  searchUsers() {
+    if (!this.searchTerm) {
+      this.pagedExpenses = [...this.expenses]; // Si no hay término de búsqueda, mostrar todo
       return;
     }
 
-    this.filteredUsers = this.allOwners.filter(owner => {
-      if (this.searchType === 'name') {
-        const fullName = `${owner.name} ${owner.lastname}`.toLowerCase();
-        return fullName.includes(this.searchTerm.toLowerCase());
-      } else if (this.searchType === 'dni') {
-        return owner.dni.toString().includes(this.searchTerm);
-      } else {
-        return owner.plots?.some(plot => 
-          plot.plotNumber.toString().includes(this.searchTerm)
-        );
-      }
+    const searchTermLower = this.searchTerm.toLowerCase();
+
+    this.pagedExpenses = this.expenses.filter(expense => {
+      // Buscar en múltiples campos
+      const ownerName = this.getOwnerName(expense.owner_id).toLowerCase();
+      const ownerDni = this.getOwnerDni(expense.owner_id).toLowerCase();
+      const ownerPlots = this.getOwnerPlots(expense.owner_id).toLowerCase();
+
+      // Retornar true si el término de búsqueda está en cualquiera de los campos
+      return ownerName.includes(searchTermLower) ||
+        ownerDni.includes(searchTermLower) ||
+        ownerPlots.includes(searchTermLower);
     });
   }
 
-  seleccionarUsuario(owner: Owner) {
+  selectUser(owner: Owner) {
     this.selectedOwner = owner;
-    this.searchTerm = this.searchType === 'name' 
-      ? `${owner.name} ${owner.lastname}`
-      : owner.dni.toString();
-    this.buscarBoletas();
+    this.searchTerm = `${owner.name} ${owner.lastname}`;
+    this.searchTickets();
   }
 
-  buscarBoletas() {
+
+  searchTickets() {
     this.currentPage = 1;
     this.isLoading = true;
     this.error = null;
@@ -673,44 +878,47 @@ validateDates() {
       const allExpenses = this.ownersWithExpenses.flatMap(item => item.expenses);
       this.applyFiltersToExpenses(allExpenses);
       this.isLoading = false;
-      this.currentPage = 1; 
+      this.currentPage = 1;
       this.loadExpenses();
     }
   }
 
   private applyFiltersToExpenses(expenses: ExpenseGenerationExpenseInterface[]) {
     let filteredExpenses = expenses;
-    
+
     const uniqueOwnerIds = [...new Set(filteredExpenses.map(expense => expense.owner_id))];
     this.loadOwnerNames(uniqueOwnerIds);
-    if (this.filtros.estado) {
-      filteredExpenses = filteredExpenses.filter(expense => 
-        expense.status === this.filtros.estado
+    if (this.filter.status) {
+      const selectedStatus = this.filter.status.split(',');
+      filteredExpenses = filteredExpenses.filter(expense =>
+        selectedStatus.includes(expense.status)
       );
     }
 
-    if (this.filtros.desde) {
-      filteredExpenses = filteredExpenses.filter(expense => 
-        new Date(expense.issueDate) >= new Date(this.filtros.desde)
+    if (this.filter.from) {
+      filteredExpenses = filteredExpenses.filter(expense =>
+        new Date(expense.issueDate) >= new Date(this.filter.from)
       );
     }
 
-    if (this.filtros.hasta) {
-      filteredExpenses = filteredExpenses.filter(expense => 
-        new Date(expense.issueDate) <= new Date(this.filtros.hasta)
+    if (this.filter.until) {
+      filteredExpenses = filteredExpenses.filter(expense =>
+        new Date(expense.issueDate) <= new Date(this.filter.until)
       );
     }
-    if (this.filtros.periodo) {
+    if (this.filter.selectedPeriod.length > 0) {
       filteredExpenses = filteredExpenses.filter(expense => {
-        const expenseMonth = parseInt(expense.period.split('-')[1], 10); 
-        return expenseMonth === this.filtros.periodo; 
+        const expenseMonth = parseInt(expense.period.split('-')[1], 10);
+        return this.filter.selectedPeriod.includes(expenseMonth);
       });
     }
-    if (this.filtros.montoMinimo) {
-      filteredExpenses = filteredExpenses.filter(expense => 
-        expense.first_expiration_amount >= this.filtros.montoMinimo!
+    if (this.filter.minimumAmount) {
+      filteredExpenses = filteredExpenses.filter(expense =>
+        expense.first_expiration_amount >= this.filter.minimumAmount!
       );
     }
+
+
 
     filteredExpenses.sort((a, b) => {
       if (a.status === 'Pendiente' && b.status !== 'Pendiente') return -1;
@@ -749,7 +957,7 @@ validateDates() {
       }
 
       const hasLetters = /[a-zA-Z]/.test(expense.payment_id);
-      const url = hasLetters 
+      const url = hasLetters
         ? `http://localhost:8020/generate-receipt/${expense.payment_id}`
         : `http://localhost:8022/api/receipts/${expense.payment_id}/pdf`;
 
@@ -771,14 +979,14 @@ validateDates() {
   private formatDate(date: Date): string {
     const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit', year: 'numeric' };
     return new Intl.DateTimeFormat('es-ES', options).format(date);
-}
- //Genera pdf y excel, filtros correctos, nuevo modal, boton ver mas implementado no completo, html rehecho y nueva interfaz, ligero
- 
- 
- 
- selectedExpirationDates = {
-  first_expiration_date: '',
-  second_expiration_date: ''
+  }
+  //Genera pdf y excel, filtros correctos, nuevo modal, boton ver mas implementado no completo, html rehecho y nueva interfaz, ligero
+
+
+
+  selectedExpirationDates = {
+    first_expiration_date: '',
+    second_expiration_date: ''
   };
 
   validDates: boolean = true;
@@ -786,7 +994,7 @@ validateDates() {
   validateExpirationDates() {
     const firstDate = new Date(this.updatedExpense.first_expiration_date);
     const secondDate = new Date(this.updatedExpense.second_expiration_date);
-    
+
     if (firstDate >= secondDate) {
       Swal.fire({
         icon: 'error',
@@ -796,15 +1004,15 @@ validateDates() {
       this.updatedExpense.second_expiration_date = this.selectedExpense?.second_expiration_date;
     }
   }
-  
+
   calculateExpirationMultiplier() {
     if (this.selectedExpense && this.updatedExpense.second_expiration_amount) {
-      this.updatedExpense.expiration_multiplier = 
+      this.updatedExpense.expiration_multiplier =
         this.updatedExpense.second_expiration_amount / this.selectedExpense.first_expiration_amount;
     }
   }
 
-  
+
 
   onlyAllowNumbers(event: KeyboardEvent): void {
     const key = event.key;
@@ -814,7 +1022,7 @@ validateDates() {
     }
 
   }
-  
+
   getOwnerName(ownerId: number): string {
     const owner = this.ownerMap.get(ownerId);
     return owner ? `${owner.name} ${owner.lastname}` : 'No asignado';
@@ -839,72 +1047,71 @@ validateDates() {
     doc.text(pageTitle, 15, 10);
     doc.setFontSize(12);
 
-    const formattedDesde = this.formatDate(new Date(this.filtros.desde));
-    const formattedHasta = this.formatDate(new Date(this.filtros.hasta));
-    doc.text(`Fechas: Desde ${formattedDesde} hasta ${formattedHasta}`, 15, 20);
+    const formattedFrom = this.formatDate(new Date(this.filter.from));
+    const formattedUntil = this.formatDate(new Date(this.filter.until));
+    doc.text(`Fechas: Desde ${formattedFrom} hasta ${formattedUntil}`, 15, 20);
 
     const filteredData = this.expenses.map((expense: ExpenseGenerationExpenseInterface) => {
-        return [
-            expense.owner_id, 
-            expense.period,
-            this.formatDate(new Date(expense.issueDate)), 
-            expense.status,
-            `$${expense.actual_amount}`, 
-            `$${expense.amount_payed}` 
-        ];
+      return [
+        this.getOwnerName(expense.owner_id),
+        expense.period,
+        this.formatDate(new Date(expense.issueDate)),
+        expense.status,
+        `$${(expense.actual_amount || 0).toFixed(2)}`,
+        `$${(expense.amount_payed || 0).toFixed(2)}`
+      ];
     });
 
     autoTable(doc, {
-        head: [['ID Propietario', 'Periodo', 'Fecha de Emisión', 'Estado', 'Monto Actual', 'Monto Pagado']],
-        body: filteredData,
-        startY: 30,
-        theme: 'grid',
-        margin: { top: 30, bottom: 20 },
+      head: [['Nombre', 'Periodo', 'Fecha de Emisión', 'Estado', 'Monto Actual', 'Monto Pagado']],
+      body: filteredData,
+      startY: 30,
+      theme: 'grid',
+      margin: { top: 30, bottom: 20 },
     });
 
-    doc.save('Boletas.pdf');
-}
+    doc.save(`listado_boletas_${formattedFrom}_${formattedUntil}.pdf`);
+  }
 
-// Exportar a Excel
-exportToExcel(): void {
+  // Exportar a Excel
+  exportToExcel(): void {
     const encabezado = [
-        ['Listado de Boletas'],
-        [`Fechas: Desde ${this.formatDate(new Date(this.filtros.desde))} hasta ${this.formatDate(new Date(this.filtros.hasta))}`],
-        [],
-        ['ID Propietario', 'Periodo', 'Fecha de Emisión', 'Estado', 'Monto Actual', 'Monto Pagado']
+      ['Listado de Boletas'],
+      [`Fechas: Desde ${this.formatDate(new Date(this.filter.from))} hasta ${this.formatDate(new Date(this.filter.until))}`],
+      [],
+      ['Nombre', 'Periodo', 'Fecha de Emisión', 'Estado', 'Monto Actual', 'Monto Pagado'] // Cambié 'ID Propietario' a 'Nombre'
     ];
 
     const excelData = this.expenses.map((expense: ExpenseGenerationExpenseInterface) => {
-        return [
-            expense.owner_id,
-            expense.period,
-            this.formatDate(new Date(expense.issueDate)), 
-            expense.status,
-            `$${expense.actual_amount}`,
-            `$${expense.amount_payed}`
-        ];
+      return [
+        this.getOwnerName(expense.owner_id), // Usamos el nombre completo del propietario
+        expense.period,
+        this.formatDate(new Date(expense.issueDate)),
+        expense.status,
+        `$${(expense.actual_amount || 0).toFixed(2)}`, // Aseguramos dos decimales y mostramos $0.00 si es null o 0
+        `$${(expense.amount_payed || 0).toFixed(2)}`   // Aseguramos dos decimales y mostramos $0.00 si es null o 0
+      ];
     });
 
     const worksheetData = [...encabezado, ...excelData];
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-    
+
     worksheet['!cols'] = [
-        { wch: 20 },
-        { wch: 20 },
-        { wch: 15 },
-        { wch: 15 },
-        { wch: 15 },
-        { wch: 15 }  
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 15 }
     ];
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Boletas');
 
-    XLSX.writeFile(workbook, `listado_boletas_${this.formatDate(new Date(this.filtros.desde))}_${this.formatDate(new Date(this.filtros.hasta))}.xlsx`);
-}
+    XLSX.writeFile(workbook, `listado_boletas_${this.formatDate(new Date(this.filter.from))}_${this.formatDate(new Date(this.filter.until))}.xlsx`);
+  }
 
 
-  
 
 
 }

@@ -107,8 +107,6 @@ getActiveOwners(): Observable<any[]> {
 }
 
 
-
-
 updateStatus(expensePaymentUpdateDTO: any): Observable<any> {
   const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
   return this.http.put<any>(`${this.ApiBaseUrl}update/status`, expensePaymentUpdateDTO, { headers });
@@ -119,11 +117,12 @@ updateExpense(expenseData: ExpenseUpdateDTO, observation: string): Observable<an
     .set('Content-Type', 'application/json')
     .set('X-Update-Observation', observation);
 
-  return this.http.put(`${this.ApiBaseUrl}/${expenseData.id}`, expenseData, { headers })
+  return this.http.put(`http://localhost:8021/api/expenses/update`, expenseData, { headers })
     .pipe(
       catchError(this.handleError)
     );
 }
+// ----------------------------------------------------------------------------------
 
 getMultipliers(): Observable<{ latePayment: number; expiration: number }> {
   const latePaymentUrl = `${this.ApiBaseUrl}late-payment-multiplier`;
@@ -178,7 +177,6 @@ updateGenerationDay(day: number, observation: string): Observable<any> {
     catchError(this.handleError)
   );
 }
-
 
 
 

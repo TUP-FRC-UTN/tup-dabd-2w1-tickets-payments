@@ -1,0 +1,7 @@
+.custom-gap{
+    gap: 1.5rem;
+}
+
+.dropdown-menu.show {
+    display: block;
+  }
