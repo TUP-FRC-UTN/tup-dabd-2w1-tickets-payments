@@ -71,5 +71,5 @@ export class ExpenseGenerationCounterServiceService {
         return of([]);
       })
     );
-  }
+  }
 }

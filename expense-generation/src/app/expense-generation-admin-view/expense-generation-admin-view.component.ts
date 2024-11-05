@@ -834,23 +834,23 @@ validateDates() {
   }
 
   buscarUsuarios() {
-    if (this.searchTerm.length < 2) {
-      this.filteredUsers = [];
+    if (!this.searchTerm) {
+      this.pagedExpenses = [...this.expenses]; // Si no hay término de búsqueda, mostrar todo
       return;
     }
   
     const searchTermLower = this.searchTerm.toLowerCase();
     
-    this.filteredUsers = this.allOwners.filter(owner => {
-      const fullName = `${owner.name} ${owner.lastname}`.toLowerCase();
-      const dni = owner.dni.toString();
-      const plotMatch = owner.plots?.some(plot => 
-        plot.plot_number.toString().includes(this.searchTerm)
-      );
+    this.pagedExpenses = this.expenses.filter(expense => {
+      // Buscar en múltiples campos
+      const ownerName = this.getOwnerName(expense.owner_id).toLowerCase();
+      const ownerDni = this.getOwnerDni(expense.owner_id).toLowerCase();
+      const ownerPlots = this.getOwnerPlots(expense.owner_id).toLowerCase();
       
-      return fullName.includes(searchTermLower) || 
-             dni.includes(this.searchTerm) || 
-             plotMatch;
+      // Retornar true si el término de búsqueda está en cualquiera de los campos
+      return ownerName.includes(searchTermLower) ||
+             ownerDni.includes(searchTermLower) ||
+             ownerPlots.includes(searchTermLower);
     });
   }
 
@@ -1053,62 +1053,62 @@ validateDates() {
 
     const filteredData = this.expenses.map((expense: ExpenseGenerationExpenseInterface) => {
         return [
-            expense.owner_id, 
+            this.getOwnerName(expense.owner_id),
             expense.period,
-            this.formatDate(new Date(expense.issueDate)), 
+            this.formatDate(new Date(expense.issueDate)),
             expense.status,
-            `$${expense.actual_amount}`, 
-            `$${expense.amount_payed}` 
+            `$${(expense.actual_amount || 0).toFixed(2)}`, 
+            `$${(expense.amount_payed || 0).toFixed(2)}`   
         ];
     });
 
     autoTable(doc, {
-        head: [['ID Propietario', 'Periodo', 'Fecha de Emisión', 'Estado', 'Monto Actual', 'Monto Pagado']],
+        head: [['Nombre', 'Periodo', 'Fecha de Emisión', 'Estado', 'Monto Actual', 'Monto Pagado']],
         body: filteredData,
         startY: 30,
         theme: 'grid',
         margin: { top: 30, bottom: 20 },
     });
 
-    doc.save('Boletas.pdf');
+    doc.save(`listado_boletas_${formattedDesde}_${formattedHasta}.pdf`);
 }
 
 // Exportar a Excel
 exportToExcel(): void {
-    const encabezado = [
-        ['Listado de Boletas'],
-        [`Fechas: Desde ${this.formatDate(new Date(this.filtros.desde))} hasta ${this.formatDate(new Date(this.filtros.hasta))}`],
-        [],
-        ['ID Propietario', 'Periodo', 'Fecha de Emisión', 'Estado', 'Monto Actual', 'Monto Pagado']
-    ];
+  const encabezado = [
+      ['Listado de Boletas'],
+      [`Fechas: Desde ${this.formatDate(new Date(this.filtros.desde))} hasta ${this.formatDate(new Date(this.filtros.hasta))}`],
+      [],
+      ['Nombre', 'Periodo', 'Fecha de Emisión', 'Estado', 'Monto Actual', 'Monto Pagado'] // Cambié 'ID Propietario' a 'Nombre'
+  ];
 
-    const excelData = this.expenses.map((expense: ExpenseGenerationExpenseInterface) => {
-        return [
-            expense.owner_id,
-            expense.period,
-            this.formatDate(new Date(expense.issueDate)), 
-            expense.status,
-            `$${expense.actual_amount}`,
-            `$${expense.amount_payed}`
-        ];
-    });
+  const excelData = this.expenses.map((expense: ExpenseGenerationExpenseInterface) => {
+      return [
+          this.getOwnerName(expense.owner_id), // Usamos el nombre completo del propietario
+          expense.period,
+          this.formatDate(new Date(expense.issueDate)), 
+          expense.status,
+          `$${(expense.actual_amount || 0).toFixed(2)}`, // Aseguramos dos decimales y mostramos $0.00 si es null o 0
+          `$${(expense.amount_payed || 0).toFixed(2)}`   // Aseguramos dos decimales y mostramos $0.00 si es null o 0
+      ];
+  });
 
-    const worksheetData = [...encabezado, ...excelData];
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-    
-    worksheet['!cols'] = [
-        { wch: 20 },
-        { wch: 20 },
-        { wch: 15 },
-        { wch: 15 },
-        { wch: 15 },
-        { wch: 15 }  
-    ];
+  const worksheetData = [...encabezado, ...excelData];
+  const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+  
+  worksheet['!cols'] = [
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 15 }  
+  ];
 
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Boletas');
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Boletas');
 
-    XLSX.writeFile(workbook, `listado_boletas_${this.formatDate(new Date(this.filtros.desde))}_${this.formatDate(new Date(this.filtros.hasta))}.xlsx`);
+  XLSX.writeFile(workbook, `listado_boletas_${this.formatDate(new Date(this.filtros.desde))}_${this.formatDate(new Date(this.filtros.hasta))}.xlsx`);
 }
 
 

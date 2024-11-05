@@ -1,5 +1,8 @@
 {
   "devDependencies": {
     "@types/bootstrap": "^5.2.10"
+  },
+  "dependencies": {
+    "angular-google-charts": "^16.0.1"
   }
 }

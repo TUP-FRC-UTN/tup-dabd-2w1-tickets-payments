@@ -1,13 +1,12 @@
 import { Component } from '@angular/core';
 import { ChartType } from 'angular-google-charts';
 import { ExpenseGenerationCounterServiceService } from '../expense-generation-services/expense-generation-counter-service.service';
-import { GoogleChartsModule } from 'angular-google-charts';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ExpenseGenerationHeaderComponent } from "../expense-generation-header/expense-generation-header.component";
 import { ExpenseGenerationNavbarComponent } from "../expense-generation-navbar/expense-generation-navbar.component";
 import { ExpenseGenerationCounter } from '../expense-generation-interfaces/expense-generation-counter';
-
+import { GoogleChartsModule } from 'angular-google-charts';
 
 @Component({
   selector: 'app-expense-generation-counter-view-2',
@@ -292,4 +291,5 @@ private updateLineChart() {
   makeBig(nro: number) {
     this.status = nro;
   }
-}
+} 
+

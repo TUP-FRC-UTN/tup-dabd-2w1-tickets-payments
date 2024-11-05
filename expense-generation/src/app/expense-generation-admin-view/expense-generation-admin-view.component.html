@@ -13,7 +13,7 @@
                 class="form-control"
                 [(ngModel)]="searchTerm"
                 (ngModelChange)="buscarUsuarios()"
-                placeholder="Buscar"
+                placeholder="Buscar por propietario, DNI o lote..."
                 #searchInput
               >
             </div>
@@ -112,7 +112,7 @@
               <button class="btn btn-primary" data-bs-toggle="modal" title="Filtros Avanzados" data-bs-target="#filtrosAvanzados">
                 <i class="bi bi-sort-down-alt"></i>
               </button>
-              <button class="btn btn-primary bi bi-trash" title="Limpiar Filtros" (click)="limpiarFiltros()"></button>
+              <button class="btn btn-secondary bi bi-trash" title="Limpiar Filtros" (click)="limpiarFiltros()"></button>
             </div>
             <div>
               <button class="btn btn-warning"  (click)="openModal()" style="color: white;">Facturación</button>
@@ -125,14 +125,11 @@
 
           </div>
           
-          
-         
-    
 
         <!-- Results Table -->
         <div class="table-responsive">
-          <table class="table table-hover border">
-            <thead class="table-light">
+          <table class="table table-striped border border-3 ">
+            <thead class="table-light border-bottom border-dark">
               <tr>
                 <th (click)="ordenarPor('period')" class="text-nowrap">
                   Periodo

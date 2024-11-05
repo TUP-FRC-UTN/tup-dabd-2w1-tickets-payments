@@ -4,6 +4,7 @@ import { ExpenseGenerationViewComponent } from './expense-generation-view/expens
 import { routes } from './app.routes';
 import { ExpenseGenerationNavbarComponent } from "./expense-generation-navbar/expense-generation-navbar.component";
 
+
 @Component({
   selector: 'app-root',
   standalone: true,

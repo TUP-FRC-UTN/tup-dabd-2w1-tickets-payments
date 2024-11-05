@@ -25,7 +25,7 @@ export class ExpenseGenerationNavbarComponent {
   // , "Accountant"]
 
   //Traer con el authService
-  actualRole : string = "FinanceManager"
+  actualRole : string = ""
   //Lista de botones
   buttonsList: SideButton[] = [];
 
@@ -92,8 +92,10 @@ export class ExpenseGenerationNavbarComponent {
     this.actualRole = role;
     if(role === "FinanceManager"){
       this.router.navigate(['/expense-generation-admin-view']);
-    }else{
+    }else if(role === "Owner"){
       this.router.navigate(['/expense-generation-user-view']);
+    }else if(role === "Accountant"){
+      this.router.navigate(['/expense-generation-accountant-view']);
     }
   }
 
