@@ -39,10 +39,7 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
   startDate: string = '';
   endDate: string = '';
 
-  minStartDate: string = '';
   minEndDate: string = '';
-
-  filtroEstado: string = '';
 
   // Variables
   total: number = 0;
@@ -170,40 +167,8 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
     }
   }
 
-  //--------------Pago de Mercado Pago-----------------
-
-  realizarPagoIndividual(expense: ExpenseGenerationExpenseInterface) {
-    if (!expense) {
-      alert('Error: No se proporcionó una boleta válida para pagar.');
-      return;
-    }
-
-    const amount =
-      typeof expense.actual_amount === 'string'
-        ? parseFloat(expense.actual_amount)
-        : expense.actual_amount;
-
-    const paymentData = {
-      description: `Pago de boleta ${expense.id}`,
-      amount: amount,
-      expenseId: expense.id,
-      period: expense.period,
-      ownerId: this.ownerId,
-    };
-
-    this.paymentService.createPaymentRequest(paymentData).subscribe({
-      next: (preferenceId: string) => {
-        const mercadoPagoUrl = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${preferenceId}`;
-        window.open(mercadoPagoUrl, '_blank');
-      },
-      error: (error: any) => {
-        console.error('Error al crear la solicitud de pago:', error);
-        alert('Hubo un error al procesar el pago. Inténtalo de nuevo.');
-      },
-    });
-  }
-
-  realizarPagoMultiple(expenses: ExpenseGenerationExpenseInterface[]) {
+  //--------------Pago de Mercado Pago----------------
+  payWithMP(expenses: ExpenseGenerationExpenseInterface[]) {
     if (!expenses || expenses.length === 0) {
       alert('Error: No se proporcionaron boletas válidas para pagar.');
       return;
@@ -230,7 +195,7 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
     const paymentData = {
       description: description,
       amount: totalAmount,
-      details: expenseDetails, 
+      details: expenseDetails,
       ownerId: this.ownerId,
     };
 
