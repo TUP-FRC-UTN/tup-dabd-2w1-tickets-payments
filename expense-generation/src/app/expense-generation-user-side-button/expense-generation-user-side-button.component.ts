@@ -39,9 +39,4 @@ export class ExpenseGenerationUserSideButtonComponent {
     }
   }
 
-  // redirect(path : string, title : string){
-  //   this.sendTitle.emit(title);
-  //   this.route.navigate([path]);
-  // }
-
 }

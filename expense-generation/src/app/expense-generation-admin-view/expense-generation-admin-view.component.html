@@ -6,31 +6,22 @@
         <!-- Filter Row -->
         <div class="row mb-3">
           <!-- Search Type and Input -->
-          <div class="col-md-4 position-relative">
+          <div class="col-md-3 position-relative" style="padding-bottom: 12px;">
             <div class="input-group">
-              <div class="input-group-prepend">
-                <select class="form-select flex-grow-0 w-auto" [(ngModel)]="searchType">
-                  <option value="name">Nombre</option>
-                  <option value="dni">DNI</option>
-                  <option value="plot">Lote</option>
-                </select>
-              </div>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 class="form-control"
                 [(ngModel)]="searchTerm"
-                [placeholder]="searchType === 'plot' ? 'Ingrese número de lote' : (searchType === 'dni' ? 'Ingrese DNI' : 'Ingrese nombre')"
                 (ngModelChange)="buscarUsuarios()"
+                placeholder="Buscar por propietario, DNI o lote..."
                 #searchInput
               >
-              <button class="btn btn-outline-secondary" type="button" (click)="clearSearch()">
-                <i class="bi bi-x-lg"></i>
-              </button>
             </div>
-            <!-- Filtered Users Dropdown -->
+
+            <!-- Dropdown de usuarios filtrados -->
             <div class="position-absolute mt-1 w-100 z-1" *ngIf="filteredUsers.length > 0 && searchTerm.length > 0">
               <div class="list-group shadow">
-                <button 
+                <button
                   type="button"
                   class="list-group-item list-group-item-action"
                   *ngFor="let owner of filteredUsers"
@@ -47,31 +38,66 @@
 
           <!-- Status Select -->
           <div class="col-md-2">
-            <select 
-              class="form-select"
-              [(ngModel)]="filtros.estado" 
-              (ngModelChange)="buscarBoletas()"
-            >
-              <option value="">Todos los estados</option>
-              <option *ngFor="let estado of estados" [value]="estado">{{ estado }}</option>
-            </select>
+            <div class="position-relative">
+              <button
+                class="form-control d-flex justify-content-between align-items-center"
+                type="button"
+                (click)="showStatusDropdown = !showStatusDropdown"
+                [attr.aria-expanded]="showStatusDropdown"
+              >
+                <span class="text-truncate me-2">{{ getEstadosSeleccionadosText() }}</span>
+                <i class="bi"
+                  [class.bi-chevron-down]="!showStatusDropdown"
+                  [class.bi-chevron-up]="showStatusDropdown">
+                </i>
+              </button>
+
+              <ul
+                class="dropdown-menu w-100 p-2 m-0 shadow-sm"
+                [class.show]="showStatusDropdown"
+                (click)="$event.stopPropagation()"
+                style="max-height: 200px; overflow-y: auto;"
+              >
+                <li *ngFor="let estado of listaEstadosDisponibles"
+                    class="dropdown-item px-2 py-1"
+                    style="cursor: pointer;"
+                >
+                  <div class="form-check m-0">
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      [id]="'estado-' + estado"
+                      [checked]="isEstadoSelected(estado)"
+                      (change)="toggleEstado(estado)"
+                    >
+                    <label
+                      class="form-check-label ms-2 w-100"
+                      [for]="'estado-' + estado"
+                      style="cursor: pointer;"
+                    >
+                      {{ estado }}
+                    </label>
+                  </div>
+                </li>
+              </ul>
+            </div>
           </div>
 
           <!-- Date Range -->
-          <div class="col-md-4">
+          <div class="col-md-4 ">
             <div class="input-group">
-              <input 
-                type="date" 
+              <input
+                type="date"
                 class="form-control"
-                [(ngModel)]="filtros.desde" 
+                [(ngModel)]="filtros.desde"
                 (ngModelChange)="validateDates(); buscarBoletas()"
                 [max]="maxDate"
                 placeholder="Fecha desde"
               >
-              <input 
-                type="date" 
-                class="form-control"
-                [(ngModel)]="filtros.hasta" 
+              <input
+                type="date"
+                class="form-control ms-2"
+                [(ngModel)]="filtros.hasta"
                 (ngModelChange)="validateDates(); buscarBoletas()"
                 [min]="filtros.desde"
                 [max]="maxDate"
@@ -79,14 +105,14 @@
               >
             </div>
           </div>
-          
+
           <!-- Action Buttons -->
-          <div class="col-md-3 d-flex gap-3 justify-content-end">
+          <div class="col-md-3 d-flex gap-3 justify-content-end" style="padding-bottom: 12px;">
             <div class="d-flex gap-1">
               <button class="btn btn-primary" data-bs-toggle="modal" title="Filtros Avanzados" data-bs-target="#filtrosAvanzados">
                 <i class="bi bi-sort-down-alt"></i>
               </button>
-              <button class="btn btn-primary bi bi-trash" title="Limpiar Filtros" (click)="limpiarFiltros()"></button>
+              <button class="btn btn-secondary bi bi-trash" title="Limpiar Filtros" (click)="limpiarFiltros()"></button>
             </div>
             <div>
               <button class="btn btn-warning"  (click)="openModal()" style="color: white;">Facturación</button>
@@ -98,36 +124,41 @@
             <!-- <button class="btn btn-warning bi bi-gear " title="Actualizar Multiplicadores" (click)="openModal()" style="color: white;"></button> -->
 
           </div>
-          
-          
->
+
 
         <!-- Results Table -->
         <div class="table-responsive">
-          <table class="table table-hover border">
-            <thead class="table-light">
+          <table class="table table-striped border border-3 ">
+            <thead class="table-light border-bottom border-dark">
               <tr>
-                <th class="text-nowrap">Periodo</th>
-                <th>Propietario</th>
-                <th class="text-start text-nowrap">Monto Primer Pago</th>
-                <th class="text-start text-nowrap">Monto Segundo Pago</th>
-                <th class="text-start text-nowrap">Monto Pagado</th>
+                <th (click)="ordenarPor('period')" class="text-nowrap">
+                  Periodo
+                  <i [ngClass]="{'fa fa-sort-asc': ordenActivo === 'period' && ordenDireccion === 'asc',
+                                 'fa fa-sort-desc': ordenActivo === 'period' && ordenDireccion === 'desc',
+                                 'fa fa-sort': ordenActivo !== 'period'}"
+                     aria-hidden="true"></i>
+                </th>
                 <th>Estado</th>
+                <th class="text-nowrap">Propietario</th>
+                <th class="text-nowrap">DNI</th>
+                <th class="text-nowrap">Lote</th>
+                <th class="text-end text-nowrap">Monto Primer Pago</th>
+                <th class="text-end text-nowrap">Monto Segundo Pago</th>
+                <th class="text-end text-nowrap">Monto Pagado</th>
                 <th class="text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let expense of pagedExpenses">
                 <td class="text-nowrap font-monospace">{{ expense.period }}</td>
-
                 <td>
-                  <span class="badge rounded-pill" 
+                  <span class="badge rounded-pill"
                         [ngClass]="{
                           'text-bg-warning': expense.status === 'Pendiente',
                           'text-bg-success': expense.status === 'Pago',
                           'text-bg-danger': expense.status === 'Exceptuado'
                         }">
-                    {{expense.status}}
+                    {{ expense.status }}
                   </span>
                 </td>
                 <td class="text-nowrap">{{ getOwnerName(expense.owner_id) }}</td>
@@ -135,38 +166,38 @@
                 <td class="text-nowrap">{{ getOwnerPlots(expense.owner_id) }}</td>
                 <td class="text-nowrap text-end">$ {{ expense.first_expiration_amount | number:'1.2-2' }}</td>
                 <td class="text-nowrap text-end">$ {{ expense.second_expiration_amount | number:'1.2-2' }}</td>
-                <td class="text-nowrap text-end">$ {{ expense.amount_payed | number:'1.2-2' }}</td>
-
+                <td class="text-nowrap text-end">$ {{ expense.actual_amount | number:'1.2-2' }}</td>
                 <td class="text-center">
-                  <button 
-                    class="btn btn-light btn-sm" 
+                  <button
+                    class="btn btn-light btn-sm"
+                    type="button"
                     data-bs-toggle="modal"
                     data-bs-target="#detallesModal"
-                    (click)="verDetalles(expense)"
-                  >
-                    Más info
+                    (click)="verDetalles(expense)">
+                    <i class="bi bi-three-dots-vertical"></i>
                   </button>
                 </td>
               </tr>
             </tbody>
           </table>
-        
+
           <!-- Pagination controls -->
           <div class="d-flex justify-content-between align-items-center border-top pt-3">
             <!-- Items per page dropdown -->
             <div class="d-flex align-items-center">
               <span class="me-2">Mostrar</span>
-              <select 
-                class="form-select form-select-sm" 
+              <select
+                class="form-select form-select-sm"
                 style="width: auto"
-                [(ngModel)]="itemsPerPage" 
+                [(ngModel)]="itemsPerPage"
                 (change)="onItemsPerPageChange()">
+                <option [value]="5">5</option>
                 <option [value]="10">10</option>
                 <option [value]="25">25</option>
                 <option [value]="50">50</option>
               </select>
             </div>
-        
+
             <!-- Pagination buttons -->
             <nav aria-label="Page navigation" *ngIf="totalPages > 0">
               <ul class="pagination pagination-sm mb-0">
@@ -176,26 +207,26 @@
                     <i class="bi bi-chevron-double-left"></i>
                   </a>
                 </li>
-                
+
                 <!-- Previous page -->
                 <li class="page-item" [class.disabled]="currentPage === 1">
                   <a class="page-link" (click)="goToPage(currentPage - 1)" [style.cursor]="currentPage === 1 ? 'not-allowed' : 'pointer'">
                     <i class="bi bi-chevron-left"></i>
                   </a>
                 </li>
-                
+
                 <!-- Page numbers -->
                 <li class="page-item" *ngFor="let page of visiblePages" [class.active]="page === currentPage">
                   <a class="page-link" (click)="goToPage(page)" style="cursor: pointer">{{ page }}</a>
                 </li>
-                
+
                 <!-- Next page -->
                 <li class="page-item" [class.disabled]="currentPage === totalPages">
                   <a class="page-link" (click)="goToPage(currentPage + 1)" [style.cursor]="currentPage === totalPages ? 'not-allowed' : 'pointer'">
                     <i class="bi bi-chevron-right"></i>
                   </a>
                 </li>
-                
+
                 <!-- Last page -->
                 <li class="page-item" [class.disabled]="currentPage === totalPages">
                   <a class="page-link" (click)="goToPage(totalPages)" [style.cursor]="currentPage === totalPages ? 'not-allowed' : 'pointer'">
@@ -236,7 +267,7 @@
               <div class="modal-content">
                 <div class="modal-header">
                   <h5 class="modal-title" id="multipliersModalLabel">Configuración de Expensas</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="onModalClose()" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                   <!-- Spinner de carga -->
@@ -245,12 +276,12 @@
                       <span class="visually-hidden">Cargando...</span>
                     </div>
                   </div>
-      
+
                   <!-- Mensaje de error -->
                   <div *ngIf="multiplierError" class="alert alert-danger">
                     {{ multiplierError }}
                   </div>
-      
+
                   <!-- Formulario -->
                   <div [class.d-none]="isLoadingMultipliers">
                     <!-- Día de Generación -->
@@ -265,6 +296,10 @@
                           min="1"
                           max="28"
                           [class.is-invalid]="!isValidGenerationDay()"
+                          [disabled]="!!fieldModified && fieldModified !== 'generationDay'"
+                          (focus)="onFieldFocus('generationDay')"
+                          (blur)="onFieldBlur()"
+                          (ngModelChange)="onFieldChange('generationDay')"
                         />
                         <span class="input-group-text">del mes</span>
                       </div>
@@ -272,9 +307,9 @@
                         El día debe estar entre 1 y 28
                       </div>
                     </div>
-      
+
                     <hr class="my-4">
-      
+
                     <!-- Multiplicadores -->
                     <div class="mb-3">
                       <label for="latePaymentInput" class="form-label">Porcentaje de pagos atrasados:</label>
@@ -286,12 +321,15 @@
                           class="form-control"
                           min="0"
                           max="100"
-                          (ngModelChange)="updateMultiplierFromPercentage('latePayment', $event)"
+                          [disabled]="!!fieldModified && fieldModified !== 'latePayment'"
+                          (focus)="onFieldFocus('latePayment')"
+                          (blur)="onFieldBlur()"
+                          (ngModelChange)="onFieldChange('latePayment')"
                         />
                         <span class="input-group-text">%</span>
                       </div>
                     </div>
-      
+
                     <div class="mb-3">
                       <label for="expirationInput" class="form-label">Porcentaje de vencimiento:</label>
                       <div class="input-group">
@@ -302,7 +340,10 @@
                           class="form-control"
                           min="0"
                           max="100"
-                          (ngModelChange)="updateMultiplierFromPercentage('expiration', $event)"
+                          [disabled]="!!fieldModified && fieldModified !== 'expiration'"
+                          (focus)="onFieldFocus('expiration')"
+                          (blur)="onFieldBlur()"
+                          (ngModelChange)="onFieldChange('expiration')"
                         />
                         <span class="input-group-text">%</span>
                       </div>
@@ -310,12 +351,12 @@
                   </div>
                 </div>
                 <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="onModalClose()">Cerrar</button>
                   <button
                     type="button"
                     class="btn btn-primary"
                     (click)="handleSaveClick()"
-                    [disabled]="isLoadingMultipliers || (!hasChanges() && generationDay === originalGenerationDay) || !isValidGenerationDay()"
+                    [disabled]="isLoadingMultipliers || !fieldModified || !isValidGenerationDay()"
                   >
                     Guardar
                   </button>
@@ -323,7 +364,7 @@
               </div>
             </div>
           </div>
-      
+
           <!-- Modal de Observación -->
           <div class="modal fade" id="observationModal" tabindex="-1" aria-labelledby="observationModalLabel" aria-hidden="true">
             <div class="modal-dialog">
@@ -364,7 +405,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Modal de Observación de Expensa -->
           <div class="modal fade" id="observationModalExpenses" tabindex="-1" data-bs-backdrop="static">
             <div class="modal-dialog">
@@ -416,26 +457,48 @@
       <div class="modal-body">
         <!-- Min Amount -->
         <div class="mb-3">
-          <label for="montoMinimo" class="form-label">Monto Mínimo</label>
-          <input 
-            type="number" 
+          <label for="montoMinimo" class="form-label">Monto Mínimo Pagado</label>
+          <input
+            type="number"
             class="form-control"
             id="montoMinimo"
-            [(ngModel)]="filtros.montoMinimo" 
+            [(ngModel)]="filtros.montoMinimo"
             name="montoMinimo"
           >
         </div>
         <div class="mb-3">
           <label for="periodo" class="form-label">Periodo</label>
-          <select 
-            class="form-select" 
-            id="periodo"
-            [(ngModel)]="filtros.periodo"
-            name="periodo"
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownPeriodos" data-bs-toggle="dropdown" aria-expanded="false">
+              Seleccionar Periodos
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownPeriodos">
+              <li *ngFor="let periodo of periodos">
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    [value]="periodo.value"
+                    (change)="togglePeriodoSeleccionado(periodo.value)"
+                    [checked]="filtros.periodoSeleccionados.includes(periodo.value)">
+                  <label class="form-check-label">
+                    {{ periodo.label }}
+                  </label>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label for="typedoc" class="form-label">Tipo Documento</label>
+          <select
+            class="form-select"
+            id="doc"
+            [(ngModel)]="filtros.typedoc"
+            name="doc"
           >
-            <option [ngValue]="null">Todos los periodos</option>
-            <option *ngFor="let periodo of periodos" [value]="periodo">
-              {{periodo}}
+            <option *ngFor="let doc of typedoc" [value]="doc">
+              {{doc}}
             </option>
           </select>
         </div>
@@ -454,67 +517,133 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="detallesModalLabel">Detalles del Gasto</h5>
+        <h5 class="modal-title" id="detallesModalLabel">Detalles de la Boleta</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body" *ngIf="selectedExpense">
         <div class="container">
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <h6 class="mb-2">Información General</h6>
-              <p class="mb-1"><strong>Período:</strong> {{selectedExpense.period}}</p>
-              <p class="mb-1"><strong>Fecha de Emisión:</strong> {{selectedExpense.issueDate | date:'dd/MM/yyyy'}}</p>
-              <p class="mb-1"><strong>Estado:</strong> 
-                <span class="badge rounded-pill" 
-                      [ngClass]="{
-                        'text-bg-warning': selectedExpense.status === 'Pendiente',
-                        'text-bg-success': selectedExpense.status === 'Pago',
-                        'text-bg-danger': selectedExpense.status === 'Exceptuado'
-                      }">
-                  {{selectedExpense.status}}
-                </span>
-              </p>
-            </div>
-            <div class="col-md-6">
-              <h6 class="mb-2">Información de Pago</h6>
-              <p class="mb-1"><strong>1er Vencimiento:</strong> {{selectedExpense.first_expiration_date | date:'dd/MM/yyyy'}}</p>
-              <p class="mb-1"><strong>Monto 1er Vencimiento:</strong> ${{selectedExpense.first_expiration_amount}}</p>
-              <p class="mb-1"><strong>2do Vencimiento:</strong> {{selectedExpense.second_expiration_date | date:'dd/MM/yyyy'}}</p>
-              <p class="mb-1"><strong>Monto 2do Vencimiento:</strong> ${{selectedExpense.second_expiration_amount}}</p>
-            </div>
-          </div>
-
-          <!-- Payment Information (if paid) -->
-          <div class="row mb-3" *ngIf="selectedExpense.status === 'Pago'">
+          <!-- Grid layout for better organization -->
+          <div class="row g-3">
+            <!-- Información del Propietario -->
             <div class="col-12">
-              <h6 class="mb-2">Detalles del Pago</h6>
-              <p class="mb-1"><strong>Método de Pago:</strong> {{selectedExpense.payment_method || 'No especificado'}}</p>
-              <p class="mb-1"><strong>Plataforma:</strong> {{selectedExpense.payment_platform || 'No especificada'}}</p>
-              <p class="mb-1"><strong>Monto Pagado:</strong> ${{selectedExpense.amount_payed}}</p>
-              <p class="mb-1"><strong>Fecha de Pago:</strong> {{selectedExpense.paymentDate | date:'dd/MM/yyyy'}}</p>
+              <div class="card">
+                <div class="card-body">
+                  <h6 class="card-title">Información del Propietario</h6>
+                  <p class="mb-0">{{ getOwnerDisplayName(selectedExpense.owner_id) }}</p>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <!-- Document Buttons -->
-          <div class="row">
+            <!-- Fechas de Vencimiento -->
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h6 class="card-title">Primer Vencimiento</h6>
+                  <div class="mb-2">
+                    <label class="form-label">Fecha</label>
+                    <input
+                      type="date"
+                      [(ngModel)]="updatedExpense.first_expiration_date"
+                      (change)="validateExpirationDates()"
+                      class="form-control"
+                      [max]="updatedExpense.second_expiration_date">
+                  </div>
+                  <div>
+                    <label class="form-label">Monto</label>
+                    <p class="form-control-plaintext">${{ selectedExpense.first_expiration_amount }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h6 class="card-title">Segundo Vencimiento</h6>
+                  <div class="mb-2">
+                    <label class="form-label">Fecha</label>
+                    <input
+                      type="date"
+                      [(ngModel)]="updatedExpense.second_expiration_date"
+                      (change)="validateExpirationDates()"
+                      class="form-control"
+                      [min]="updatedExpense.first_expiration_date">
+                  </div>
+                  <div>
+                    <label class="form-label">Monto</label>
+                    <input
+                      type="number"
+                      [(ngModel)]="updatedExpense.second_expiration_amount"
+                      (ngModelChange)="calculateExpirationMultiplier()"
+                      class="form-control"
+                      [min]="selectedExpense.first_expiration_amount">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Estado -->
             <div class="col-12">
-              <div class="d-flex gap-2">
-                <button class="btn btn-outline-danger" (click)="openPdf(selectedExpense.id)">
-                  <i class="bi bi-file-earmark-pdf"></i>
-                  Ver Factura
-                </button>
-                <p *ngIf="!selectedExpense.payment_id">Payment ID no disponible</p> <!-- Temporal para depuración -->
-                <button 
-                  class="btn btn-outline-primary" 
-                  *ngIf="selectedExpense.payment_id"
-                  (click)="openReceipt(selectedExpense)">
-                  <i class="bi bi-file-earmark-text"></i>
-                  Ver Comprobante
-                  </button>
+              <div class="card">
+                <div class="card-body">
+                  <h6 class="card-title">Estado</h6>
+                  <select
+                    [(ngModel)]="updatedExpense.status"
+                    class="form-select">
+                    <option value="Pago">Pago</option>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Exceptuado">Exceptuado</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Documentos -->
+            <div class="col-12">
+              <div class="card">
+                <div class="card-body">
+                  <h6 class="card-title">Documentos</h6>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-outline-danger" (click)="openPdf(selectedExpense.id)">
+                      <i class="bi bi-file-earmark-pdf"></i> Ver Factura
+                    </button>
+                    <button
+                      class="btn btn-outline-primary"
+                      *ngIf="selectedExpense.payment_id"
+                      (click)="openReceipt(selectedExpense)">
+                      <i class="bi bi-file-earmark-text"></i> Ver Comprobante
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="!hasChangesExpense()"
+          (click)="openObservationModal()">
+          Guardar Cambios
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de info -->
+<div class="modal fade" id="infoModal" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">FinanceManager info</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        Lorem ipsum dolor sit amet consectetur adipisicing elit. Beatae itaque soluta provident eum facilis eaque tenetur. Dolorem aut, animi dolore dolor placeat, natus aliquam doloremque consequatur velit odio, magnam amet.
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>

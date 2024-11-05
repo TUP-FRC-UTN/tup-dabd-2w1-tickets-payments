@@ -39,9 +39,7 @@ export class ExpenseGenerationPaymentFormComponent implements OnInit {
 
   expensesToPay: ExpenseGenerationExpenseInterface[] = [];
   paymentIntentId: string = "";
-  clientSecret: string = "";
   error: string = '';
-  paymentStatusMessage: string = '';
   processing: boolean = false;
   paymentSuccessful: boolean = false;
 
@@ -137,7 +135,7 @@ export class ExpenseGenerationPaymentFormComponent implements OnInit {
           this.goBack();
 
         }
-        
+
         else if (result.isDenied) {
           // Si presiona Descargar
           Swal.fire({
@@ -153,7 +151,7 @@ export class ExpenseGenerationPaymentFormComponent implements OnInit {
                   "¡Listo!",
                   "El comprobante se ha descargado correctamente",
                   "success"
-                  
+
                 );
                 this.goBack();
               }).catch(() => {
