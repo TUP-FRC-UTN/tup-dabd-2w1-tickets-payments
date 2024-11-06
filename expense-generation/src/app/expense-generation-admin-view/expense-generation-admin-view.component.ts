@@ -10,9 +10,10 @@ import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import autoTable from 'jspdf-autotable';
 import { forkJoin } from 'rxjs/internal/observable/forkJoin';
-import { firstValueFrom } from 'rxjs/internal/firstValueFrom';
 import Swal from 'sweetalert2';
 import { Observable } from 'rxjs/internal/Observable';
+import { ExpenseGenerationNavbarComponent } from "../expense-generation-navbar/expense-generation-navbar.component";
+import { BehaviorSubject } from 'rxjs';
 declare var window: any;
 
 interface MultiplierData {
@@ -21,16 +22,19 @@ interface MultiplierData {
   generationDay: number;
 }
 
+
+
 @Component({
   selector: 'app-expense-generation-admin-view',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ExpenseGenerationNavbarComponent],
   templateUrl: './expense-generation-admin-view.component.html',
   styleUrls: ['./expense-generation-admin-view.component.css'],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ExpenseGenerationAdminViewComponent implements OnInit {
   selectedExpense: ExpenseGenerationExpenseInterface | null = null;
+i: any;
   seeDetails(expense: ExpenseGenerationExpenseInterface) {
     this.selectedExpense = expense;
     this.updatedExpense = {
@@ -41,6 +45,8 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
       second_expiration_amount: expense.second_expiration_amount,
     };
   }
+  private expensesSubject = new BehaviorSubject<any[]>([]);
+  expenses$ = this.expensesSubject.asObservable();
   visiblePages: number[] = [];
   pagedExpenses: any[] = [];
   isLoading: boolean = false;
@@ -83,6 +89,11 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
   detallesModal: any;
   observationModal: any;
 
+  updateExpensesList(expenses: any[]) {
+    this.expensesSubject.next(expenses);
+  }
+
+  
 
   @ViewChild('searchInput') searchInput!: ElementRef;
   @ViewChild('multipliersModal') multipliersModal!: ElementRef;
@@ -142,6 +153,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
     } else {
       this.filter.selectedPeriod.splice(index, 1);
     }
+    this.filter$.next({ ...this.filter });
   }
 
   toggleStatus(status: string) {
@@ -163,7 +175,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
   }
 
   getSelectedStatusText(): string {
-    return this.filter.status ? this.filter.status : 'Seleccionar estado';
+    return this.filter.status ? this.filter.status : 'Seleccionar Estado';
   }
 
 
@@ -263,7 +275,10 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
     const today = new Date();
     const lastMonth = new Date();
     lastMonth.setMonth(lastMonth.getMonth() - 3);
-
+    this.filter$.next({ ...this.filter });
+    this.filter$.subscribe(() => {
+      this.searchTickets(); 
+    });
     this.filter.until = today.toISOString().split('T')[0];
     this.filter.from = lastMonth.toISOString().split('T')[0];
 
@@ -444,13 +459,33 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
   }
 
   openObservationModal() {
-    const modalElement = document.getElementById('observationModalExpenses');
-    if (modalElement) {
-      const observationModal = new window.bootstrap.Modal(modalElement, {
-        backdrop: 'static'
-      });
-      observationModal.show();
+    const detallesModalElement = document.getElementById('detallesModal');
+    const detallesModal = window.bootstrap.Modal.getInstance(detallesModalElement);
+  
+    if (detallesModal) {
+      detallesModal.hide(); 
     }
+    const observationModalElement = document.getElementById('observationModalExpenses');
+    const observationModal = new window.bootstrap.Modal(observationModalElement, {
+      backdrop: 'static', 
+    });
+    observationModal.show();
+  }
+
+  closeObservationModal() {
+    const observationModalElement = document.getElementById('observationModalExpenses');
+    const observationModal = window.bootstrap.Modal.getInstance(observationModalElement);
+  
+    if (observationModal) {
+      observationModal.hide();
+    }
+    const backdrop = document.querySelector('.modal-backdrop');
+    if (backdrop) {
+      backdrop.remove();
+    }
+    const detallesModalElement = document.getElementById('detallesModal');
+    const detallesModal = new window.bootstrap.Modal(detallesModalElement);
+    detallesModal.show(); 
   }
 
   saveChangesExpenses() {
@@ -477,10 +512,13 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
       },
       error: (error) => {
         Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Ocurrió un error al guardar los cambios: ' + error
+          icon: 'success',
+          title: 'Éxito',
+          text: 'Los cambios se guardaron correctamente'
         });
+        this.observationModal.hide();
+        this.detallesModal.hide();
+        this.refreshExpensesList();
       }
     });
   }
@@ -661,7 +699,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
           icon: 'success',
           confirmButtonText: 'Aceptar'
         }).then(() => {
-          // Recargar configuración
+          this.updateVisiblePages;
           this.loadConfiguration();
         });
       },
@@ -830,7 +868,8 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
 
   getPlotNumbers(owner: Owner): string {
     if (!owner.plots || owner.plots.length === 0) return 'Sin lotes';
-    return owner.plots.map(plot => `${plot.plot_number}`).join(', ');
+    const plotNumbers = owner.plots.map(plot => `${plot.plot_number}`).join(', ');
+    return owner.plots.length > 1 ? `${plotNumbers}` : `${plotNumbers}`;
   }
 
   searchUsers() {
@@ -860,6 +899,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
     this.searchTickets();
   }
 
+  filter$ = new BehaviorSubject(this.filter);
 
   searchTickets() {
     this.currentPage = 1;
@@ -914,10 +954,12 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
     }
     if (this.filter.minimumAmount) {
       filteredExpenses = filteredExpenses.filter(expense =>
-        expense.first_expiration_amount >= this.filter.minimumAmount!
+        expense.actual_amount >= this.filter.minimumAmount!
       );
     }
 
+
+    
 
 
     filteredExpenses.sort((a, b) => {
@@ -933,6 +975,17 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
     this.isLoading = false;
   }
 
+
+  updateFilterField(field: keyof typeof this.filter, event: Event) {
+    const inputElement = event.target as HTMLInputElement;
+    const value = inputElement.value;
+    if (field === 'minimumAmount' || field === 'period') {
+      (this.filter[field] as number | null) = value ? Number(value) : null;
+    } else {
+      (this.filter[field] as string) = value;
+    }
+    this.filter$.next({ ...this.filter });
+  }
   async openPdf(id: number) {
     try {
       const response = await fetch(`http://localhost:8021/api/expenses/pdf/${id}`);
@@ -1007,7 +1060,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
 
   calculateExpirationMultiplier() {
     if (this.selectedExpense && this.updatedExpense.second_expiration_amount) {
-      this.updatedExpense.expiration_multiplier =
+      this.updatedExpense.second_expiration_amount =
         this.updatedExpense.second_expiration_amount / this.selectedExpense.first_expiration_amount;
     }
   }
@@ -1016,7 +1069,6 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
 
   onlyAllowNumbers(event: KeyboardEvent): void {
     const key = event.key;
-    // Permitir números, un punto decimal y no permitir otros caracteres
     if (!/[\d.]/.test(key) && key !== 'Backspace' && key !== 'Tab') {
       event.preventDefault();
     }

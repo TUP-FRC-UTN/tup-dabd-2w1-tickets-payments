@@ -1,4 +1,5 @@
-<div class="container-fluid py-4 bg-light min-vh-100">
+<app-expense-generation-navbar></app-expense-generation-navbar>
+<div class="bg-light min-vh-100" style="padding-top: 2%;">
   <div class="row">
     <div class="col-12">
       <!-- Main Container -->
@@ -9,7 +10,7 @@
           <div class="col-md-3 position-relative" style="padding-bottom: 12px;">
             <div class="input-group">
               <input type="text" class="form-control" [(ngModel)]="searchTerm" (ngModelChange)="searchUsers()"
-                placeholder="Buscar por propietario, DNI o lote..." #searchInput>
+                placeholder="Buscar" #searchInput>
             </div>
 
             <!-- Dropdown de usuarios filtrados -->
@@ -67,7 +68,7 @@
             <div class="d-flex gap-1">
               <button class="btn btn-primary" data-bs-toggle="modal" title="Filtros Avanzados"
                 data-bs-target="#filtrosAvanzados">
-                <i class="bi bi-sort-down-alt"></i>
+                <i class="bi bi-funnel-fill"></i>
               </button>
               <button class="btn btn-secondary bi bi-trash" title="Limpiar Filtros" (click)="cleanFilters()"></button>
             </div>
@@ -87,22 +88,22 @@
 
           <!-- Results Table -->
           <div class="table-responsive">
-            <table class="table table-striped border border-3 ">
+            <table class="table table-striped border border-3 table-hover ">
               <thead class="table-light border-bottom border-dark">
                 <tr>
-                  <th (click)="ordenarPor('period')" class="text-nowrap">
+                  <th (click)="ordenarPor('period')" class="text-start">
                     Periodo
                     <i [ngClass]="{'fa fa-sort-asc': activeOrder === 'period' && directionOrder === 'asc',
                                  'fa fa-sort-desc': activeOrder === 'period' && directionOrder === 'desc',
                                  'fa fa-sort': activeOrder !== 'period'}" aria-hidden="true"></i>
                   </th>
-                  <th>Estado</th>
-                  <th class="text-nowrap">Propietario</th>
-                  <th class="text-nowrap">DNI</th>
-                  <th class="text-nowrap">Lote</th>
-                  <th class="text-end text-nowrap">Monto Primer Pago</th>
-                  <th class="text-end text-nowrap">Monto Segundo Pago</th>
-                  <th class="text-end text-nowrap">Monto Pagado</th>
+                  <th class="text-start">Estado</th>
+                  <th class="text-start">Propietario</th>
+                  <th class="text-end">Documento</th>
+                  <th class="text-end">Lote</th>
+                  <th class=" text-end">Monto Primer Pago</th>
+                  <th class="text-end">Monto Segundo Pago</th>
+                  <th class="text-end">Monto Pagado</th>
                   <th class="text-center">Acciones</th>
                 </tr>
               </thead>
@@ -118,9 +119,9 @@
                       {{ expense.status }}
                     </span>
                   </td>
-                  <td class="text-nowrap">{{ getOwnerName(expense.owner_id) }}</td>
-                  <td class="text-nowrap">{{ getOwnerDni(expense.owner_id) }}</td>
-                  <td class="text-nowrap">{{ getOwnerPlots(expense.owner_id) }}</td>
+                  <td class="text-start">{{ getOwnerName(expense.owner_id) }}</td>
+                  <td class="text-end">{{ getOwnerDni(expense.owner_id) }}</td>
+                  <td class="text-nowrap text-end">{{ getOwnerPlots(expense.owner_id) }}</td>
                   <td class="text-nowrap text-end">$ {{ expense.first_expiration_amount | number:'1.2-2' }}</td>
                   <td class="text-nowrap text-end">$ {{ expense.second_expiration_amount | number:'1.2-2' }}</td>
                   <td class="text-nowrap text-end">$ {{ expense.actual_amount | number:'1.2-2' }}</td>
@@ -138,7 +139,6 @@
             <div class="d-flex justify-content-between align-items-center border-top pt-3">
               <!-- Items per page dropdown -->
               <div class="d-flex align-items-center">
-                <span class="me-2">Mostrar</span>
                 <select class="form-select form-select-sm" style="width: auto" [(ngModel)]="itemsPerPage"
                   (change)="onItemsPerPageChange()">
                   <option [value]="5">5</option>
@@ -192,12 +192,7 @@
             </div>
           </div>
 
-          <!-- Loading State -->
-          <div *ngIf="isLoading" class="text-center my-4">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Cargando...</span>
-            </div>
-          </div>
+          
 
           <!-- Error Message -->
           <div *ngIf="error" class="alert alert-danger" role="alert">
@@ -226,12 +221,7 @@
             aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <!-- Spinner de carga -->
-          <div *ngIf="isLoadingMultipliers" class="text-center my-3">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Cargando...</span>
-            </div>
-          </div>
+          
 
           <!-- Mensaje de error -->
           <div *ngIf="multiplierError" class="alert alert-danger">
@@ -327,7 +317,7 @@
   </div>
 
   <!-- Modal de Observación de Expensa -->
-  <div class="modal fade" id="observationModalExpenses" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal fade" id="observationModalExpenses" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -370,11 +360,22 @@
         <div class="modal-body">
           <!-- Min Amount -->
           <div class="mb-3">
-            <label for="montoMinimo" class="form-label">Monto Mínimo</label>
-            <input type="number" class="form-control" id="montoMinimo" [(ngModel)]="filter.minimumAmount"
-              name="montoMinimo">
+            <div class="row">
+            <div class="col-4">
+              <label for="montoMinimo" class="form-label">Monto Mínimo</label>
+            </div>
+            <div class="col-8">
+              <input
+              type="number"
+              class="form-control"
+              id="montoMinimo"
+              (input)="updateFilterField('minimumAmount', $event)"
+              name="montoMinimo"
+            >
+            </div>
+          </div>            
           </div>
-          <div class="mb-3">
+          <div class="mb-3">             
             <label for="periodo" class="form-label">Periodo</label>
             <div class="dropdown">
               <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownPeriodos"
@@ -393,7 +394,7 @@
                   </div>
                 </li>
               </ul>
-            </div>
+          </div>
           </div>
           <div class="mb-3">
             <label for="typedoc" class="form-label">Tipo Documento</label>
@@ -432,7 +433,7 @@
                 <div class="card">
                   <div class="card-body">
                     <h6 class="card-title">Información del Propietario</h6>
-                    <p class="mb-0">{{ getOwnerDisplayName(selectedExpense.owner_id) }}</p>
+                    <p class="mb-0">{{ this.getOwnerName(this.selectedExpense.id) }}</p>
                   </div>
                 </div>
               </div>
@@ -512,9 +513,9 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-          <button type="button" class="btn btn-primary" [disabled]="!hasChangesExpense()"
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal" [disabled]="!hasChangesExpense()"
             (click)="openObservationModal()">
-            Guardar Cambios
+            Guardar
           </button>
         </div>
       </div>
@@ -540,3 +541,4 @@
       </div>
     </div>
   </div>
+</div>

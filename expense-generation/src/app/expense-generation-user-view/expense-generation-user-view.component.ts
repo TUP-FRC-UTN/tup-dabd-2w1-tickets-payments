@@ -9,6 +9,7 @@ import { ExpenseGenerationCardComponent } from '../expense-generation-card/expen
 import { ExpenseGenerationPaymentService } from '../expense-generation-services/expense-generation-payment.service';
 import { response, Router } from 'express';
 import { RouterOutlet } from '@angular/router';
+import { ExpenseGenerationNavbarComponent } from "../expense-generation-navbar/expense-generation-navbar.component";
 
 @Component({
   selector: 'app-expense-generation-user-view',
@@ -19,7 +20,8 @@ import { RouterOutlet } from '@angular/router';
     FormsModule,
     ExpenseGenerationCardComponent,
     RouterOutlet,
-  ],
+    ExpenseGenerationNavbarComponent
+],
   templateUrl: './expense-generation-user-view.component.html',
   styleUrl: './expense-generation-user-view.component.css',
 })
