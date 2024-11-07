@@ -12,7 +12,7 @@ import autoTable from 'jspdf-autotable';
 import { forkJoin } from 'rxjs/internal/observable/forkJoin';
 import Swal from 'sweetalert2';
 import { Observable } from 'rxjs/internal/Observable';
-import { ExpenseGenerationNavbarComponent } from "../expense-generation-navbar/expense-generation-navbar.component";
+import { ExpenseGenerationNavbarComponent } from '../expense-generation-navbar/expense-generation-navbar.component';
 import { BehaviorSubject } from 'rxjs';
 import localeEsAr from '@angular/common/locales/es-AR';
 registerLocaleData(localeEsAr, 'es-AR');
@@ -25,64 +25,69 @@ interface MultiplierData {
   generationDay: number;
 }
 
-
-
 @Component({
   selector: 'app-expense-generation-admin-view',
   standalone: true,
   imports: [CommonModule, FormsModule, ExpenseGenerationNavbarComponent],
   templateUrl: './expense-generation-admin-view.component.html',
   styleUrls: ['./expense-generation-admin-view.component.css'],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA]
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ExpenseGenerationAdminViewComponent implements OnInit {
-// Formatear los períodos
-loadMultipliersData() {
-  this.isLoadingMultipliers = true;
+  // Formatear los períodos
+  loadMultipliersData() {
+    this.isLoadingMultipliers = true;
 
-  forkJoin({
-    multipliers: this.expenseService.getMultipliers(),
-    generationDay: this.expenseService.getGenerationDay()
-  }).subscribe({
-    next: ({ multipliers, generationDay }) => {
-      this.latePaymentPercentage = multipliers.latePayment * 100;
-      this.expirationPercentage = multipliers.expiration * 100;
-      this.generationDay = generationDay;
-    },
-    error: (error) => {
-      console.error('Error loading multipliers data', error);
-    },
-    complete: () => {
-      this.isLoadingMultipliers = false;
-    }
-  });
-}
+    forkJoin({
+      multipliers: this.expenseService.getMultipliers(),
+      generationDay: this.expenseService.getGenerationDay(),
+    }).subscribe({
+      next: ({ multipliers, generationDay }) => {
+        this.latePaymentPercentage = multipliers.latePayment * 100;
+        this.expirationPercentage = multipliers.expiration * 100;
+        this.generationDay = generationDay;
+      },
+      error: (error) => {
+        console.error('Error loading multipliers data', error);
+      },
+      complete: () => {
+        this.isLoadingMultipliers = false;
+      },
+    });
+  }
 
-saveAllChanges() {
-  const observation = 'Updated configuration'; // Customize this if needed
+  saveAllChanges() {
+    const observation = 'Updated configuration'; // Customize this if needed
 
-  // Convert percentages back to decimal for the update
-  const latePaymentMultiplier = this.latePaymentPercentage / 100;
-  const expirationMultiplier = this.expirationPercentage / 100;
+    // Convert percentages back to decimal for the update
+    const latePaymentMultiplier = this.latePaymentPercentage / 100;
+    const expirationMultiplier = this.expirationPercentage / 100;
 
-  // Call all update methods simultaneously
-  forkJoin([
-    this.expenseService.updateLatePaymentMultiplier(latePaymentMultiplier, observation),
-    this.expenseService.updateExpirationMultiplier(expirationMultiplier, observation),
-    this.expenseService.updateGenerationDay(this.generationDay, observation)
-  ]).subscribe({
-    next: () => {
-      console.log('All fields updated successfully');
-      this.onModalClose(); // Optionally close the modal here
-    },
-    error: (error) => {
-      console.error('Error updating fields', error);
-      this.multiplierError = 'There was an error updating the fields. Please try again.';
-    }
-  });
-}
+    // Call all update methods simultaneously
+    forkJoin([
+      this.expenseService.updateLatePaymentMultiplier(
+        latePaymentMultiplier,
+        observation
+      ),
+      this.expenseService.updateExpirationMultiplier(
+        expirationMultiplier,
+        observation
+      ),
+      this.expenseService.updateGenerationDay(this.generationDay, observation),
+    ]).subscribe({
+      next: () => {
+        console.log('All fields updated successfully');
+        this.onModalClose(); // Optionally close the modal here
+      },
+      error: (error) => {
+        console.error('Error updating fields', error);
+        this.multiplierError =
+          'There was an error updating the fields. Please try again.';
+      },
+    });
+  }
   selectedExpense: ExpenseGenerationExpenseInterface | null = null;
-i: any;
+  i: any;
   seeDetails(expense: ExpenseGenerationExpenseInterface) {
     this.selectedExpense = expense;
     this.updatedExpense = {
@@ -106,7 +111,10 @@ i: any;
   selectedOwner: Owner | null = null;
   allOwners: Owner[] = [];
   ownerMap: Map<number, Owner> = new Map();
-  ownersWithExpenses: { owner: Owner; expenses: ExpenseGenerationExpenseInterface[] }[] = [];
+  ownersWithExpenses: {
+    owner: Owner;
+    expenses: ExpenseGenerationExpenseInterface[];
+  }[] = [];
   ownerNames: { [key: number]: string } = {};
   latePaymentMultiplier: number = 0;
   expirationMultiplier: number = 0;
@@ -132,7 +140,6 @@ i: any;
   // Valores actuales
   generationDay: number = 1;
 
-
   updatedExpense: any = {};
   detallesModal: any;
   observationModal: any;
@@ -140,8 +147,6 @@ i: any;
   updateExpensesList(expenses: any[]) {
     this.expensesSubject.next(expenses);
   }
-
-  
 
   @ViewChild('searchInput') searchInput!: ElementRef;
   @ViewChild('multipliersModal') multipliersModal!: ElementRef;
@@ -157,14 +162,10 @@ i: any;
     { value: 9, label: '9 - Septiembre' },
     { value: 10, label: '10 - Octubre' },
     { value: 11, label: '11 - Noviembre' },
-    { value: 12, label: '12 - Diciembre' }
+    { value: 12, label: '12 - Diciembre' },
   ];
-  listStatus: string[] = [
-    'Pendiente',
-    'Pago',
-    'Exceptuado'
-  ];
-  typedoc = ['DNI','PASAPORTE'];
+  listStatus: string[] = ['Pendiente', 'Pago', 'Exceptuado'];
+  typedoc = ['DNI', 'PASAPORTE'];
   filter = {
     from: '',
     until: '',
@@ -176,10 +177,9 @@ i: any;
   };
   multiplier: number = 1;
 
-
   status = ['Pendiente', 'Pago', 'Exceptuado'];
   showStatusDropdown = false;
-  constructor(private expenseService: ExpenseGenerationExpenseService) { }
+  constructor(private expenseService: ExpenseGenerationExpenseService) {}
 
   originalLatePaymentPercentage: number = 0;
   originalExpirationPercentage: number = 0;
@@ -188,67 +188,69 @@ i: any;
   fieldModified: 'generationDay' | 'latePayment' | 'expiration' | null = null;
   activeField: 'generationDay' | 'latePayment' | 'expiration' | null = null;
 
-  onFieldFocus(fieldName: 'generationDay' | 'latePayment' | 'expiration'): void {
+  onFieldFocus(
+    fieldName: 'generationDay' | 'latePayment' | 'expiration'
+  ): void {
     if (!this.fieldModified || this.fieldModified === fieldName) {
       this.activeField = fieldName;
     }
   }
 
-
-
   showPeriodDropdown = false;
   periodFilter: string = '';
 
   filteredPeriodos() {
-    return this.periodos.filter(periodo => 
-        periodo.label.toLowerCase().includes(this.periodFilter.toLowerCase())
+    return this.periodos.filter((periodo) =>
+      periodo.label.toLowerCase().includes(this.periodFilter.toLowerCase())
     );
-}
-toggleSelectedPeriod(month: number) {
-  const index = this.filter.selectedPeriod.indexOf(month);
-  if (index === -1) {
-      this.filter.selectedPeriod.push(month);
-  } else {
-      this.filter.selectedPeriod.splice(index, 1);
   }
-  this.filter$.next({ ...this.filter });
-}
+  toggleSelectedPeriod(month: number) {
+    const index = this.filter.selectedPeriod.indexOf(month);
+    if (index === -1) {
+      this.filter.selectedPeriod.push(month);
+    } else {
+      this.filter.selectedPeriod.splice(index, 1);
+    }
+    this.filter$.next({ ...this.filter });
+  }
 
   toggleStatus(status: string) {
-    const selectedStatus = this.filter.status ? this.filter.status.split(',') : [];
+    const selectedStatus = this.filter.status
+      ? this.filter.status.split(',')
+      : [];
     const index = selectedStatus.indexOf(status);
 
     if (index === -1) {
-        selectedStatus.push(status);
+      selectedStatus.push(status);
     } else {
-        selectedStatus.splice(index, 1);
+      selectedStatus.splice(index, 1);
     }
 
     this.filter.status = selectedStatus.join(',');
-    this.statusFilter = ''; 
+    this.statusFilter = '';
     this.searchTickets();
   }
   isSelectedStatus(status: string): boolean {
-    const selectedStatus = this.filter.status ? this.filter.status.split(',') : [];
+    const selectedStatus = this.filter.status
+      ? this.filter.status.split(',')
+      : [];
     return selectedStatus.includes(status);
   }
 
   getSelectedStatusText(): string {
     if (this.statusFilter) {
-        return this.statusFilter;
+      return this.statusFilter;
     }
     return this.filter.status ? this.filter.status : '';
   }
 
-  statusFilter: string = ''; 
-
+  statusFilter: string = '';
 
   filteredStatusList(): string[] {
-    return this.listStatus.filter(status => 
-        status.toLowerCase().includes(this.statusFilter.toLowerCase())
+    return this.listStatus.filter((status) =>
+      status.toLowerCase().includes(this.statusFilter.toLowerCase())
     );
   }
-
 
   onBlur() {
     setTimeout(() => {
@@ -266,26 +268,28 @@ toggleSelectedPeriod(month: number) {
     this.expirationPercentage = this.originalExpirationPercentage;
   }
 
-
-
-  isFieldModified(fieldName: 'generationDay' | 'latePayment' | 'expiration'): boolean {
+  isFieldModified(
+    fieldName: 'generationDay' | 'latePayment' | 'expiration'
+  ): boolean {
     switch (fieldName) {
       case 'generationDay':
         return this.generationDay !== this.originalGenerationDay;
       case 'latePayment':
-        return this.latePaymentPercentage !== this.originalLatePaymentPercentage;
+        return (
+          this.latePaymentPercentage !== this.originalLatePaymentPercentage
+        );
       case 'expiration':
         return this.expirationPercentage !== this.originalExpirationPercentage;
     }
   }
 
-
-
   onFieldBlur(): void {
     this.activeField = null;
   }
 
-  onFieldChange(fieldName: 'generationDay' | 'latePayment' | 'expiration'): void {
+  onFieldChange(
+    fieldName: 'generationDay' | 'latePayment' | 'expiration'
+  ): void {
     if (this.isFieldModified(fieldName)) {
       this.fieldModified = fieldName;
     } else {
@@ -305,9 +309,11 @@ toggleSelectedPeriod(month: number) {
   }
 
   loadOwnerNames(ownerIds: number[]) {
-    const validOwnerIds = ownerIds.filter(id => id !== undefined && id !== null);
+    const validOwnerIds = ownerIds.filter(
+      (id) => id !== undefined && id !== null
+    );
 
-    validOwnerIds.forEach(id => {
+    validOwnerIds.forEach((id) => {
       if (!this.ownerNames[id]) {
         this.expenseService.GetOwnerById(id).subscribe({
           next: (owner) => {
@@ -320,7 +326,7 @@ toggleSelectedPeriod(month: number) {
           error: (error) => {
             console.error(`Error loading owner name for ID ${id}:`, error);
             this.ownerNames[id] = `Propietario ${id}`;
-          }
+          },
         });
       }
     });
@@ -337,9 +343,11 @@ toggleSelectedPeriod(month: number) {
   }
 
   hasUnsavedChanges(): boolean {
-    return this.isFieldModified('generationDay') ||
+    return (
+      this.isFieldModified('generationDay') ||
       this.isFieldModified('latePayment') ||
-      this.isFieldModified('expiration');
+      this.isFieldModified('expiration')
+    );
   }
 
   ngOnInit() {
@@ -348,7 +356,7 @@ toggleSelectedPeriod(month: number) {
     lastMonth.setMonth(lastMonth.getMonth() - 3);
     this.filter$.next({ ...this.filter });
     this.filter$.subscribe(() => {
-      this.searchTickets(); 
+      this.searchTickets();
     });
     this.filter.until = today.toISOString().split('T')[0];
     this.filter.from = lastMonth.toISOString().split('T')[0];
@@ -357,8 +365,12 @@ toggleSelectedPeriod(month: number) {
     this.loadInitialData();
 
     // Initialize modals
-    this.detallesModal = new window.bootstrap.Modal(document.getElementById('detallesModal'));
-    this.observationModal = new window.bootstrap.Modal(document.getElementById('observationModal'));
+    this.detallesModal = new window.bootstrap.Modal(
+      document.getElementById('detallesModal')
+    );
+    this.observationModal = new window.bootstrap.Modal(
+      document.getElementById('observationModal')
+    );
   }
 
   loadInitialData() {
@@ -375,14 +387,14 @@ toggleSelectedPeriod(month: number) {
 
         // Crear el mapa de propietarios
         this.ownerMap = new Map(
-          data.map(item => [item.owner.id, item.owner])
+          data.map((item) => [item.owner.id, item.owner])
         );
 
         // Extraer todos los propietarios
-        this.allOwners = data.map(item => item.owner);
+        this.allOwners = data.map((item) => item.owner);
 
         // Extraer todas las boletas y aplicar filtros iniciales
-        const allExpenses = data.flatMap(item => item.expenses);
+        const allExpenses = data.flatMap((item) => item.expenses);
 
         // Verificar si hay boletas
         if (allExpenses.length === 0) {
@@ -392,7 +404,9 @@ toggleSelectedPeriod(month: number) {
         }
 
         // Cargar los nombres de los propietarios
-        const uniqueOwnerIds = [...new Set(allExpenses.map(expense => expense.owner_id))];
+        const uniqueOwnerIds = [
+          ...new Set(allExpenses.map((expense) => expense.owner_id)),
+        ];
         this.loadOwnerNames(uniqueOwnerIds);
 
         this.isLoading = false;
@@ -404,12 +418,11 @@ toggleSelectedPeriod(month: number) {
         console.error('Error al cargar los datos:', error);
         this.error = 'Error al cargar los datos: ' + error.message;
         this.isLoading = false;
-      }
+      },
     });
   }
 
   maxDate: string = new Date().toISOString().split('T')[0];
-
 
   loadConfiguration() {
     this.isLoadingMultipliers = true;
@@ -417,7 +430,7 @@ toggleSelectedPeriod(month: number) {
 
     forkJoin({
       multipliers: this.expenseService.getMultipliers(),
-      generationDay: this.expenseService.getGenerationDay()
+      generationDay: this.expenseService.getGenerationDay(),
     }).subscribe({
       next: (data) => {
         // Guardar valores originales
@@ -436,7 +449,7 @@ toggleSelectedPeriod(month: number) {
         console.error('Error loading configuration:', error);
         this.multiplierError = 'Error al cargar la configuración';
         this.isLoadingMultipliers = false;
-      }
+      },
     });
   }
 
@@ -453,7 +466,10 @@ toggleSelectedPeriod(month: number) {
 
   updateVisiblePages() {
     const maxVisiblePages = 3;
-    let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+    let startPage = Math.max(
+      1,
+      this.currentPage - Math.floor(maxVisiblePages / 2)
+    );
     let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
 
     // Ajustar startPage si estamos cerca del final
@@ -492,15 +508,17 @@ toggleSelectedPeriod(month: number) {
     return this.generationDay >= 1 && this.generationDay <= 28;
   }
 
-
   hasChangesExpense(): boolean {
     if (!this.selectedExpense) return false;
 
     return (
       this.updatedExpense.status !== this.selectedExpense.status ||
-      this.updatedExpense.first_expiration_date !== this.selectedExpense.first_expiration_date ||
-      this.updatedExpense.second_expiration_date !== this.selectedExpense.second_expiration_date ||
-      this.updatedExpense.second_expiration_amount !== this.selectedExpense.second_expiration_amount
+      this.updatedExpense.first_expiration_date !==
+        this.selectedExpense.first_expiration_date ||
+      this.updatedExpense.second_expiration_date !==
+        this.selectedExpense.second_expiration_date ||
+      this.updatedExpense.second_expiration_amount !==
+        this.selectedExpense.second_expiration_amount
     );
   }
 
@@ -509,44 +527,71 @@ toggleSelectedPeriod(month: number) {
     if (!this.selectedExpense) return changes;
 
     if (this.updatedExpense.status !== this.selectedExpense.status) {
-      changes.push(`Estado: ${this.selectedExpense.status} → ${this.updatedExpense.status}`);
+      changes.push(
+        `Estado: ${this.selectedExpense.status} → ${this.updatedExpense.status}`
+      );
     }
-    if (this.updatedExpense.first_expiration_date !== this.selectedExpense.first_expiration_date) {
+    if (
+      this.updatedExpense.first_expiration_date !==
+      this.selectedExpense.first_expiration_date
+    ) {
       changes.push('Cambio en la primera fecha de vencimiento');
     }
-    if (this.updatedExpense.second_expiration_date !== this.selectedExpense.second_expiration_date) {
+    if (
+      this.updatedExpense.second_expiration_date !==
+      this.selectedExpense.second_expiration_date
+    ) {
       changes.push('Cambio en la segunda fecha de vencimiento');
     }
-    if (this.updatedExpense.second_expiration_amount !== this.selectedExpense.second_expiration_amount) {
-      changes.push(`Monto 2do vencimiento: $${this.selectedExpense.second_expiration_amount} → $${this.updatedExpense.second_expiration_amount}`);
+    if (
+      this.updatedExpense.second_expiration_amount !==
+      this.selectedExpense.second_expiration_amount
+    ) {
+      changes.push(
+        `Monto 2do vencimiento: $${this.selectedExpense.second_expiration_amount} → $${this.updatedExpense.second_expiration_amount}`
+      );
     }
     return changes;
   }
 
   ngAfterViewInit() {
     // Inicializar las referencias a los modales
-    this.detallesModal = new window.bootstrap.Modal(document.getElementById('detallesModal'));
-    this.observationModal = new window.bootstrap.Modal(document.getElementById('observationModalExpenses'));
+    this.detallesModal = new window.bootstrap.Modal(
+      document.getElementById('detallesModal')
+    );
+    this.observationModal = new window.bootstrap.Modal(
+      document.getElementById('observationModalExpenses')
+    );
   }
 
   openObservationModal() {
     const detallesModalElement = document.getElementById('detallesModal');
-    const detallesModal = window.bootstrap.Modal.getInstance(detallesModalElement);
-  
+    const detallesModal =
+      window.bootstrap.Modal.getInstance(detallesModalElement);
+
     if (detallesModal) {
-      detallesModal.hide(); 
+      detallesModal.hide();
     }
-    const observationModalElement = document.getElementById('observationModalExpenses');
-    const observationModal = new window.bootstrap.Modal(observationModalElement, {
-      backdrop: 'static', 
-    });
+    const observationModalElement = document.getElementById(
+      'observationModalExpenses'
+    );
+    const observationModal = new window.bootstrap.Modal(
+      observationModalElement,
+      {
+        backdrop: 'static',
+      }
+    );
     observationModal.show();
   }
 
   closeObservationModal() {
-    const observationModalElement = document.getElementById('observationModalExpenses');
-    const observationModal = window.bootstrap.Modal.getInstance(observationModalElement);
-  
+    const observationModalElement = document.getElementById(
+      'observationModalExpenses'
+    );
+    const observationModal = window.bootstrap.Modal.getInstance(
+      observationModalElement
+    );
+
     if (observationModal) {
       observationModal.hide();
     }
@@ -556,7 +601,7 @@ toggleSelectedPeriod(month: number) {
     }
     const detallesModalElement = document.getElementById('detallesModal');
     const detallesModal = new window.bootstrap.Modal(detallesModalElement);
-    detallesModal.show(); 
+    detallesModal.show();
   }
 
   saveChangesExpenses() {
@@ -567,7 +612,7 @@ toggleSelectedPeriod(month: number) {
       status: this.updatedExpense.status,
       expiration_multiplier: this.updatedExpense.second_expiration_amount,
       first_expiration_date: this.updatedExpense.first_expiration_date,
-      second_expiration_date: this.updatedExpense.second_expiration_date
+      second_expiration_date: this.updatedExpense.second_expiration_date,
     };
 
     this.expenseService.updateExpense(updateDTO, this.observation).subscribe({
@@ -575,7 +620,7 @@ toggleSelectedPeriod(month: number) {
         Swal.fire({
           icon: 'success',
           title: 'Éxito',
-          text: 'Los cambios se guardaron correctamente'
+          text: 'Los cambios se guardaron correctamente',
         });
         this.observationModal.hide();
         this.detallesModal.hide();
@@ -585,12 +630,12 @@ toggleSelectedPeriod(month: number) {
         Swal.fire({
           icon: 'success',
           title: 'Éxito',
-          text: 'Los cambios se guardaron correctamente'
+          text: 'Los cambios se guardaron correctamente',
         });
         this.observationModal.hide();
         this.detallesModal.hide();
         this.refreshExpensesList();
-      }
+      },
     });
   }
 
@@ -615,7 +660,6 @@ toggleSelectedPeriod(month: number) {
       this.activeOrder = campo;
       this.directionOrder = 'asc';
     }
-
   }
 
   hasChanges(): boolean {
@@ -623,7 +667,8 @@ toggleSelectedPeriod(month: number) {
       this.latePaymentPercentage !== this.originalLatePayment * 100 ||
       this.expirationPercentage !== this.originalExpiration * 100;
 
-    const hasGenerationDayChanges = this.generationDay !== this.originalGenerationDay;
+    const hasGenerationDayChanges =
+      this.generationDay !== this.originalGenerationDay;
 
     return hasMultiplierChanges || hasGenerationDayChanges;
   }
@@ -632,15 +677,25 @@ toggleSelectedPeriod(month: number) {
     const changes: string[] = [];
 
     if (this.latePaymentPercentage !== this.originalLatePayment * 100) {
-      changes.push(`Multiplicador de pagos atrasados: ${(this.originalLatePayment * 100).toFixed(1)}% → ${this.latePaymentPercentage.toFixed(1)}%`);
+      changes.push(
+        `Multiplicador de pagos atrasados: ${(
+          this.originalLatePayment * 100
+        ).toFixed(1)}% → ${this.latePaymentPercentage.toFixed(1)}%`
+      );
     }
 
     if (this.expirationPercentage !== this.originalExpiration * 100) {
-      changes.push(`Multiplicador de vencimiento: ${(this.originalExpiration * 100).toFixed(1)}% → ${this.expirationPercentage.toFixed(1)}%`);
+      changes.push(
+        `Multiplicador de vencimiento: ${(
+          this.originalExpiration * 100
+        ).toFixed(1)}% → ${this.expirationPercentage.toFixed(1)}%`
+      );
     }
 
     if (this.generationDay !== this.originalGenerationDay) {
-      changes.push(`Día de generación: ${this.originalGenerationDay} → ${this.generationDay}`);
+      changes.push(
+        `Día de generación: ${this.originalGenerationDay} → ${this.generationDay}`
+      );
     }
 
     return changes;
@@ -657,18 +712,24 @@ toggleSelectedPeriod(month: number) {
   handleSaveClick() {
     if (this.hasChanges()) {
       // Cerrar el modal de multiplicadores
-      const multipliersModalElement = document.getElementById('multipliersModal');
+      const multipliersModalElement =
+        document.getElementById('multipliersModal');
       if (multipliersModalElement) {
-        const multipliersModal = window.bootstrap.Modal.getInstance(multipliersModalElement);
+        const multipliersModal = window.bootstrap.Modal.getInstance(
+          multipliersModalElement
+        );
         if (multipliersModal) {
           multipliersModal.hide();
         }
       }
 
       // Abrir el modal de observación
-      const observationModalElement = document.getElementById('observationModal');
+      const observationModalElement =
+        document.getElementById('observationModal');
       if (observationModalElement) {
-        const observationModal = new window.bootstrap.Modal(observationModalElement);
+        const observationModal = new window.bootstrap.Modal(
+          observationModalElement
+        );
         observationModal.show();
       }
     }
@@ -680,7 +741,7 @@ toggleSelectedPeriod(month: number) {
         title: 'Error',
         text: 'La observación es obligatoria',
         icon: 'error',
-        confirmButtonText: 'Aceptar'
+        confirmButtonText: 'Aceptar',
       });
       return;
     }
@@ -689,7 +750,11 @@ toggleSelectedPeriod(month: number) {
     const updatedValues: any = {};
 
     // Preparar las solicitudes solo para los valores que han cambiado
-    if (this.latePaymentPercentage !== this.originalLatePayment * 100 || this.expirationPercentage !== this.originalExpiration * 100 || this.generationDay !== this.originalGenerationDay) {
+    if (
+      this.latePaymentPercentage !== this.originalLatePayment * 100 ||
+      this.expirationPercentage !== this.originalExpiration * 100 ||
+      this.generationDay !== this.originalGenerationDay
+    ) {
       updatedValues.latePayment = this.latePaymentPercentage / 100;
       requests.push(
         this.expenseService.updateLatePaymentMultiplier(
@@ -697,7 +762,6 @@ toggleSelectedPeriod(month: number) {
           this.observation
         )
       );
-
     }
 
     if (this.expirationPercentage !== this.originalExpiration * 100) {
@@ -725,12 +789,10 @@ toggleSelectedPeriod(month: number) {
         title: 'Información',
         text: 'No hay cambios para guardar',
         icon: 'info',
-        confirmButtonText: 'Aceptar'
+        confirmButtonText: 'Aceptar',
       });
       return;
     }
-
-
 
     // Mostrar loading
     Swal.fire({
@@ -739,7 +801,7 @@ toggleSelectedPeriod(month: number) {
       allowOutsideClick: false,
       didOpen: () => {
         Swal.showLoading();
-      }
+      },
     });
 
     // Ejecutar todas las solicitudes en paralelo
@@ -769,7 +831,7 @@ toggleSelectedPeriod(month: number) {
           title: 'Éxito',
           text: 'Los cambios se han guardado correctamente',
           icon: 'success',
-          confirmButtonText: 'Aceptar'
+          confirmButtonText: 'Aceptar',
         }).then(() => {
           this.updateVisiblePages;
           this.loadConfiguration();
@@ -781,12 +843,11 @@ toggleSelectedPeriod(month: number) {
           title: 'Error',
           text: 'Ocurrió un error al guardar los cambios',
           icon: 'error',
-          confirmButtonText: 'Aceptar'
+          confirmButtonText: 'Aceptar',
         });
-      }
+      },
     });
   }
-
 
   showConfirmation() {
     Swal.fire({
@@ -794,7 +855,7 @@ toggleSelectedPeriod(month: number) {
       text: 'Los cambios se han guardado correctamente.',
       icon: 'success',
       confirmButtonText: 'Aceptar',
-      confirmButtonColor: "#3085d6"
+      confirmButtonColor: '#3085d6',
     }).then(() => {
       this.closeModal();
     });
@@ -808,7 +869,10 @@ toggleSelectedPeriod(month: number) {
     }
   }
 
-  updateMultiplierFromPercentage(field: 'latePayment' | 'expiration', value: number) {
+  updateMultiplierFromPercentage(
+    field: 'latePayment' | 'expiration',
+    value: number
+  ) {
     if (value < 0) value = 0;
     if (value > 100) value = 100;
 
@@ -819,9 +883,8 @@ toggleSelectedPeriod(month: number) {
     }
   }
 
-
   closeAllModals() {
-    ['multipliersModal', 'observationModal'].forEach(modalId => {
+    ['multipliersModal', 'observationModal'].forEach((modalId) => {
       const modalElement = document.getElementById(modalId);
       if (modalElement) {
         const modalInstance = window.bootstrap.Modal.getInstance(modalElement);
@@ -839,7 +902,6 @@ toggleSelectedPeriod(month: number) {
       modal.show();
     }
   }
-
 
   validateDates() {
     const from = new Date(this.filter.from);
@@ -864,19 +926,19 @@ toggleSelectedPeriod(month: number) {
         this.ownersWithExpenses = data;
 
         this.ownerMap = new Map(
-          data.map(item => [item.owner.id, item.owner])
+          data.map((item) => [item.owner.id, item.owner])
         );
 
-        const allExpenses = data.flatMap(item => item.expenses);
+        const allExpenses = data.flatMap((item) => item.expenses);
         this.applyFiltersToExpenses(allExpenses);
 
-        this.allOwners = data.map(item => item.owner);
+        this.allOwners = data.map((item) => item.owner);
         this.isLoading = false;
       },
       error: (error) => {
         this.error = 'Error al cargar los datos: ' + error.message;
         this.isLoading = false;
-      }
+      },
     });
   }
 
@@ -892,16 +954,20 @@ toggleSelectedPeriod(month: number) {
   // Inicializa y formatea los períodos
   initializePeriodos() {
     // Obtener períodos únicos de las expenses
-    const uniquePeriods = [...new Set(
-      this.ownersWithExpenses
-        .flatMap(owner => owner.expenses)
-        .map(expense => expense.period)
-    )].sort().reverse();
+    const uniquePeriods = [
+      ...new Set(
+        this.ownersWithExpenses
+          .flatMap((owner) => owner.expenses)
+          .map((expense) => expense.period)
+      ),
+    ]
+      .sort()
+      .reverse();
 
     // Formatear los períodos
-    this.formattedPeriod = uniquePeriods.map(period => ({
+    this.formattedPeriod = uniquePeriods.map((period) => ({
       value: period,
-      label: this.formatPeriod(period)
+      label: this.formatPeriod(period),
     }));
   }
 
@@ -909,8 +975,18 @@ toggleSelectedPeriod(month: number) {
   formatPeriod(period: string): string {
     const [year, month] = period.split('-');
     const months = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
     ];
     return `${months[parseInt(month) - 1]} ${year}`;
   }
@@ -936,11 +1012,11 @@ toggleSelectedPeriod(month: number) {
     this.loadAllOwnersWithExpenses();
   }
 
-
-
   getPlotNumbers(owner: Owner): string {
     if (!owner.plots || owner.plots.length === 0) return 'Sin lotes';
-    const plotNumbers = owner.plots.map(plot => `${plot.plot_number}`).join(', ');
+    const plotNumbers = owner.plots
+      .map((plot) => `${plot.plot_number}`)
+      .join(', ');
     return owner.plots.length > 1 ? `${plotNumbers}` : `${plotNumbers}`;
   }
 
@@ -952,16 +1028,18 @@ toggleSelectedPeriod(month: number) {
 
     const searchTermLower = this.searchTerm.toLowerCase();
 
-    this.pagedExpenses = this.expenses.filter(expense => {
+    this.pagedExpenses = this.expenses.filter((expense) => {
       // Buscar en múltiples campos
       const ownerName = this.getOwnerName(expense.owner_id).toLowerCase();
       const ownerDni = this.getOwnerDni(expense.owner_id).toLowerCase();
       const ownerPlots = this.getOwnerPlots(expense.owner_id).toLowerCase();
 
       // Retornar true si el término de búsqueda está en cualquiera de los campos
-      return ownerName.includes(searchTermLower) ||
+      return (
+        ownerName.includes(searchTermLower) ||
         ownerDni.includes(searchTermLower) ||
-        ownerPlots.includes(searchTermLower);
+        ownerPlots.includes(searchTermLower)
+      );
     });
   }
 
@@ -979,7 +1057,9 @@ toggleSelectedPeriod(month: number) {
     this.error = null;
 
     if (this.selectedOwner) {
-      const ownerData = this.ownersWithExpenses.find(item => item.owner.id === this.selectedOwner!.id);
+      const ownerData = this.ownersWithExpenses.find(
+        (item) => item.owner.id === this.selectedOwner!.id
+      );
       if (ownerData) {
         this.applyFiltersToExpenses(ownerData.expenses);
       } else {
@@ -987,7 +1067,9 @@ toggleSelectedPeriod(month: number) {
       }
       this.isLoading = false;
     } else {
-      const allExpenses = this.ownersWithExpenses.flatMap(item => item.expenses);
+      const allExpenses = this.ownersWithExpenses.flatMap(
+        (item) => item.expenses
+      );
       this.applyFiltersToExpenses(allExpenses);
       this.isLoading = false;
       this.currentPage = 1;
@@ -995,44 +1077,44 @@ toggleSelectedPeriod(month: number) {
     }
   }
 
-  private applyFiltersToExpenses(expenses: ExpenseGenerationExpenseInterface[]) {
+  private applyFiltersToExpenses(
+    expenses: ExpenseGenerationExpenseInterface[]
+  ) {
     let filteredExpenses = expenses;
 
-    const uniqueOwnerIds = [...new Set(filteredExpenses.map(expense => expense.owner_id))];
+    const uniqueOwnerIds = [
+      ...new Set(filteredExpenses.map((expense) => expense.owner_id)),
+    ];
     this.loadOwnerNames(uniqueOwnerIds);
     if (this.filter.status) {
       const selectedStatus = this.filter.status.split(',');
-      filteredExpenses = filteredExpenses.filter(expense =>
+      filteredExpenses = filteredExpenses.filter((expense) =>
         selectedStatus.includes(expense.status)
       );
     }
 
     if (this.filter.from) {
-      filteredExpenses = filteredExpenses.filter(expense =>
-        new Date(expense.issueDate) >= new Date(this.filter.from)
+      filteredExpenses = filteredExpenses.filter(
+        (expense) => new Date(expense.issueDate) >= new Date(this.filter.from)
       );
     }
 
     if (this.filter.until) {
-      filteredExpenses = filteredExpenses.filter(expense =>
-        new Date(expense.issueDate) <= new Date(this.filter.until)
+      filteredExpenses = filteredExpenses.filter(
+        (expense) => new Date(expense.issueDate) <= new Date(this.filter.until)
       );
     }
     if (this.filter.selectedPeriod.length > 0) {
-      filteredExpenses = filteredExpenses.filter(expense => {
+      filteredExpenses = filteredExpenses.filter((expense) => {
         const expenseMonth = parseInt(expense.period.split('-')[1], 10);
         return this.filter.selectedPeriod.includes(expenseMonth);
       });
     }
     if (this.filter.minimumAmount) {
-      filteredExpenses = filteredExpenses.filter(expense =>
-        expense.actual_amount >= this.filter.minimumAmount!
+      filteredExpenses = filteredExpenses.filter(
+        (expense) => expense.actual_amount >= this.filter.minimumAmount!
       );
     }
-
-
-    
-
 
     filteredExpenses.sort((a, b) => {
       if (a.status === 'Pendiente' && b.status !== 'Pendiente') return -1;
@@ -1047,7 +1129,6 @@ toggleSelectedPeriod(month: number) {
     this.isLoading = false;
   }
 
-
   updateFilterField(field: keyof typeof this.filter, event: Event) {
     const inputElement = event.target as HTMLInputElement;
     const value = inputElement.value;
@@ -1060,9 +1141,11 @@ toggleSelectedPeriod(month: number) {
   }
   async openPdf(id: number) {
     try {
-      const response = await fetch(`http://localhost:8021/api/expenses/pdf/${id}`);
+      const response = await fetch(
+        `http://localhost:8021/api/expenses/pdf/${id}`
+      );
       if (!response.ok) {
-        alert("No se pudo cargar el PDF");
+        alert('No se pudo cargar el PDF');
         return;
       }
       const blob = await response.blob();
@@ -1070,14 +1153,14 @@ toggleSelectedPeriod(month: number) {
       window.open(url);
     } catch (error) {
       console.error('Error al abrir el PDF:', error);
-      alert("Error al intentar abrir el PDF");
+      alert('Error al intentar abrir el PDF');
     }
   }
 
   async openReceipt(expense: ExpenseGenerationExpenseInterface) {
     try {
       if (!expense.payment_id) {
-        alert("No hay comprobante disponible");
+        alert('No hay comprobante disponible');
         return;
       }
 
@@ -1088,7 +1171,7 @@ toggleSelectedPeriod(month: number) {
 
       const response = await fetch(url);
       if (!response.ok) {
-        alert("No se pudo cargar el comprobante");
+        alert('No se pudo cargar el comprobante');
         return;
       }
 
@@ -1097,21 +1180,23 @@ toggleSelectedPeriod(month: number) {
       window.open(fileUrl);
     } catch (error) {
       console.error('Error al abrir el comprobante:', error);
-      alert("Error al intentar abrir el comprobante");
+      alert('Error al intentar abrir el comprobante');
     }
   }
 
   private formatDate(date: Date): string {
-    const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit', year: 'numeric' };
+    const options: Intl.DateTimeFormatOptions = {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    };
     return new Intl.DateTimeFormat('es-ES', options).format(date);
   }
   //Genera pdf y excel, filtros correctos, nuevo modal, boton ver mas implementado no completo, html rehecho y nueva interfaz, ligero
 
-
-
   selectedExpirationDates = {
     first_expiration_date: '',
-    second_expiration_date: ''
+    second_expiration_date: '',
   };
 
   validDates: boolean = true;
@@ -1124,24 +1209,22 @@ toggleSelectedPeriod(month: number) {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'La primera fecha de vencimiento debe ser anterior a la segunda fecha'
+        text: 'La primera fecha de vencimiento debe ser anterior a la segunda fecha',
       });
-      this.updatedExpense.second_expiration_date = this.selectedExpense?.second_expiration_date;
+      this.updatedExpense.second_expiration_date =
+        this.selectedExpense?.second_expiration_date;
     }
   }
 
   calculateExpirationMultiplier() {
-      const multiplier = this.updatedExpense.second_expiration_amount;
+    const multiplier = this.updatedExpense.second_expiration_amount;
   }
-
-
 
   onlyAllowNumbers(event: KeyboardEvent): void {
     const key = event.key;
     if (!/[\d.]/.test(key) && key !== 'Backspace' && key !== 'Tab') {
       event.preventDefault();
     }
-
   }
 
   getOwnerName(ownerId: number): string {
@@ -1152,11 +1235,16 @@ toggleSelectedPeriod(month: number) {
   getOwnerDni(ownerId: number): string {
     const owner = this.ownerMap.get(ownerId);
     if (owner) {
-        const initial = owner.dni_type === 'DNI' ? 'D' : owner.dni_type === 'Pasaporte' ? 'P' : 'N/A';
-        return `${initial}- ${owner.dni}`;
+      const initial =
+        owner.dni_type === 'DNI'
+          ? 'D'
+          : owner.dni_type === 'Pasaporte'
+          ? 'P'
+          : 'N/A';
+      return `${initial}- ${owner.dni}`;
     }
     return 'N/A';
-}
+  }
 
   getOwnerDniType(ownerId: number): string {
     const owner = this.ownerMap.get(ownerId);
@@ -1180,23 +1268,38 @@ toggleSelectedPeriod(month: number) {
     const formattedUntil = this.formatDate(new Date(this.filter.until));
     doc.text(`Fechas: Desde ${formattedFrom} hasta ${formattedUntil}`, 15, 20);
 
-    const filteredData = this.expenses.map((expense: ExpenseGenerationExpenseInterface) => {
-      return [
-        expense.period,
-        this.formatDate(new Date(expense.issueDate)),
-        this.getOwnerName(expense.owner_id),
-        expense.status,
-        `$${(expense.actual_amount || 0).toFixed(2)}`,
-        `$${(expense.amount_payed || 0).toFixed(2)}`
-      ];
-    });
+    const filteredData = this.expenses.map(
+      (expense: ExpenseGenerationExpenseInterface) => {
+        return [
+          expense.period,
+          this.formatDate(new Date(expense.issueDate)),
+          this.getOwnerName(expense.owner_id),
+          expense.status,
+          `$${(expense.actual_amount || 0).toFixed(2)}`,
+          `$${(expense.amount_payed || 0).toFixed(2)}`,
+        ];
+      }
+    );
 
     autoTable(doc, {
-      head: [['Periodo', 'Fecha de Emisión', 'Nombre', 'Estado', 'Monto Actual', 'Monto Pagado']],
+      head: [
+        [
+          'Periodo',
+          'Fecha de Emisión',
+          'Nombre',
+          'Estado',
+          'Monto Actual',
+          'Monto Pagado',
+        ],
+      ],
       body: filteredData,
       startY: 30,
       theme: 'grid',
       margin: { top: 30, bottom: 20 },
+      columnStyles: {
+        4: { halign: 'right' }, // Alinear "Monto Actual" a la derecha
+        5: { halign: 'right' }, // Alinear "Monto Pagado" a la derecha
+      },
     });
 
     doc.save(`listado_boletas_${formattedFrom}_${formattedUntil}.pdf`);
@@ -1206,21 +1309,34 @@ toggleSelectedPeriod(month: number) {
   exportToExcel(): void {
     const encabezado = [
       ['Listado de Boletas'],
-      [`Fechas: Desde ${this.formatDate(new Date(this.filter.from))} hasta ${this.formatDate(new Date(this.filter.until))}`],
+      [
+        `Fechas: Desde ${this.formatDate(
+          new Date(this.filter.from)
+        )} hasta ${this.formatDate(new Date(this.filter.until))}`,
+      ],
       [],
-      ['Periodo', 'Fecha de Emisión', 'Nombre', 'Estado', 'Monto Actual', 'Monto Pagado'] // Cambié 'ID Propietario' a 'Nombre'
+      [
+        'Periodo',
+        'Fecha de Emisión',
+        'Nombre',
+        'Estado',
+        'Monto Actual',
+        'Monto Pagado',
+      ], // Cambié 'ID Propietario' a 'Nombre'
     ];
 
-    const excelData = this.expenses.map((expense: ExpenseGenerationExpenseInterface) => {
-      return [
-        expense.period,
-        this.formatDate(new Date(expense.issueDate)),
-        this.getOwnerName(expense.owner_id),
-        expense.status,
-        `$${(expense.actual_amount || 0).toFixed(2)}`, // Aseguramos dos decimales y mostramos $0.00 si es null o 0
-        `$${(expense.amount_payed || 0).toFixed(2)}`   // Aseguramos dos decimales y mostramos $0.00 si es null o 0
-      ];
-    });
+    const excelData = this.expenses.map(
+      (expense: ExpenseGenerationExpenseInterface) => {
+        return [
+          expense.period,
+          this.formatDate(new Date(expense.issueDate)),
+          this.getOwnerName(expense.owner_id),
+          expense.status,
+          `$${(expense.actual_amount || 0).toFixed(2)}`, // Aseguramos dos decimales y mostramos $0.00 si es null o 0
+          `$${(expense.amount_payed || 0).toFixed(2)}`, // Aseguramos dos decimales y mostramos $0.00 si es null o 0
+        ];
+      }
+    );
 
     const worksheetData = [...encabezado, ...excelData];
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
@@ -1231,16 +1347,17 @@ toggleSelectedPeriod(month: number) {
       { wch: 15 },
       { wch: 15 },
       { wch: 15 },
-      { wch: 15 }
+      { wch: 15 },
     ];
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Boletas');
 
-    XLSX.writeFile(workbook, `listado_boletas_${this.formatDate(new Date(this.filter.from))}_${this.formatDate(new Date(this.filter.until))}.xlsx`);
+    XLSX.writeFile(
+      workbook,
+      `listado_boletas_${this.formatDate(
+        new Date(this.filter.from)
+      )}_${this.formatDate(new Date(this.filter.until))}.xlsx`
+    );
   }
-
-
-
-
 }
