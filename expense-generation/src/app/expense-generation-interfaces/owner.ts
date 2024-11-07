@@ -2,6 +2,7 @@ export interface Owner {
   id: number;
   name: string;
   lastname: string;
+  dni_type : string;
   dni: number;
 
   active?: boolean;
@@ -10,7 +11,8 @@ export interface Owner {
   email?: string;
   contactId?: number;
   avatarUrl?: string;
-  dateOfBirth?: string;
+  dateBirth?: string;
+  cuitCuil? : number;
   roles?: string[];
   businessName?: string;
   ownerType?: string;

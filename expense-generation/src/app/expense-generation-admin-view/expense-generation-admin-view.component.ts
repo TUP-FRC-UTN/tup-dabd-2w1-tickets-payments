@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { CommonModule, registerLocaleData } from '@angular/common';
 import { ExpenseGenerationExpenseService } from '../expense-generation-services/expense-generation-expense.service';
 import { ExpenseGenerationExpenseInterface } from '../expense-generation-interfaces/expense-generation-expense-interface';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
@@ -14,6 +14,9 @@ import Swal from 'sweetalert2';
 import { Observable } from 'rxjs/internal/Observable';
 import { ExpenseGenerationNavbarComponent } from "../expense-generation-navbar/expense-generation-navbar.component";
 import { BehaviorSubject } from 'rxjs';
+import localeEsAr from '@angular/common/locales/es-AR';
+registerLocaleData(localeEsAr, 'es-AR');
+
 declare var window: any;
 
 interface MultiplierData {
@@ -116,7 +119,7 @@ i: any;
     'Pago',
     'Exceptuado'
   ];
-  typedoc = ['DNI', 'CUIT/CUIL', 'PASAPORTE'];
+  typedoc = ['DNI','PASAPORTE'];
   filter = {
     from: '',
     until: '',
@@ -146,27 +149,38 @@ i: any;
     }
   }
 
-  toggleSelectedPeriod(month: number) {
-    const index = this.filter.selectedPeriod.indexOf(month);
-    if (index === -1) {
+
+
+  showPeriodDropdown = false;
+  periodFilter: string = '';
+
+  filteredPeriodos() {
+    return this.periodos.filter(periodo => 
+        periodo.label.toLowerCase().includes(this.periodFilter.toLowerCase())
+    );
+}
+toggleSelectedPeriod(month: number) {
+  const index = this.filter.selectedPeriod.indexOf(month);
+  if (index === -1) {
       this.filter.selectedPeriod.push(month);
-    } else {
+  } else {
       this.filter.selectedPeriod.splice(index, 1);
-    }
-    this.filter$.next({ ...this.filter });
   }
+  this.filter$.next({ ...this.filter });
+}
 
   toggleStatus(status: string) {
     const selectedStatus = this.filter.status ? this.filter.status.split(',') : [];
     const index = selectedStatus.indexOf(status);
 
     if (index === -1) {
-      selectedStatus.push(status);
+        selectedStatus.push(status);
     } else {
-      selectedStatus.splice(index, 1);
+        selectedStatus.splice(index, 1);
     }
 
     this.filter.status = selectedStatus.join(',');
+    this.statusFilter = ''; 
     this.searchTickets();
   }
   isSelectedStatus(status: string): boolean {
@@ -175,7 +189,19 @@ i: any;
   }
 
   getSelectedStatusText(): string {
-    return this.filter.status ? this.filter.status : 'Seleccionar Estado';
+    if (this.statusFilter) {
+        return this.statusFilter;
+    }
+    return this.filter.status ? this.filter.status : '';
+  }
+
+  statusFilter: string = ''; 
+
+
+  filteredStatusList(): string[] {
+    return this.listStatus.filter(status => 
+        status.toLowerCase().includes(this.statusFilter.toLowerCase())
+    );
   }
 
 
@@ -494,7 +520,7 @@ i: any;
     const updateDTO = {
       id: this.updatedExpense.id,
       status: this.updatedExpense.status,
-      expiration_multiplier: this.updatedExpense.expiration_multiplier,
+      expiration_multiplier: this.updatedExpense.second_expiration_amount,
       first_expiration_date: this.updatedExpense.first_expiration_date,
       second_expiration_date: this.updatedExpense.second_expiration_date
     };
@@ -524,6 +550,7 @@ i: any;
   }
 
   refreshExpensesList() {
+    this.loadInitialData();
   }
 
   activeOrder: string = '';
@@ -1059,10 +1086,7 @@ i: any;
   }
 
   calculateExpirationMultiplier() {
-    if (this.selectedExpense && this.updatedExpense.second_expiration_amount) {
-      this.updatedExpense.second_expiration_amount =
-        this.updatedExpense.second_expiration_amount / this.selectedExpense.first_expiration_amount;
-    }
+      const multiplier = this.updatedExpense.second_expiration_amount;
   }
 
 
@@ -1082,9 +1106,17 @@ i: any;
 
   getOwnerDni(ownerId: number): string {
     const owner = this.ownerMap.get(ownerId);
-    return owner ? owner.dni.toString() : 'N/A';
-  }
+    if (owner) {
+        const initial = owner.dni_type === 'DNI' ? 'D' : owner.dni_type === 'Pasaporte' ? 'P' : 'N/A';
+        return `${initial}- ${owner.dni}`;
+    }
+    return 'N/A';
+}
 
+  getOwnerDniType(ownerId: number): string {
+    const owner = this.ownerMap.get(ownerId);
+    return owner ? owner.dni_type : 'N/A';
+  }
   getOwnerPlots(ownerId: number): string {
     const owner = this.ownerMap.get(ownerId);
     return owner ? this.getPlotNumbers(owner) : 'Sin lotes';
@@ -1105,9 +1137,9 @@ i: any;
 
     const filteredData = this.expenses.map((expense: ExpenseGenerationExpenseInterface) => {
       return [
-        this.getOwnerName(expense.owner_id),
         expense.period,
         this.formatDate(new Date(expense.issueDate)),
+        this.getOwnerName(expense.owner_id),
         expense.status,
         `$${(expense.actual_amount || 0).toFixed(2)}`,
         `$${(expense.amount_payed || 0).toFixed(2)}`
@@ -1115,7 +1147,7 @@ i: any;
     });
 
     autoTable(doc, {
-      head: [['Nombre', 'Periodo', 'Fecha de Emisión', 'Estado', 'Monto Actual', 'Monto Pagado']],
+      head: [['Periodo', 'Fecha de Emisión', 'Nombre', 'Estado', 'Monto Actual', 'Monto Pagado']],
       body: filteredData,
       startY: 30,
       theme: 'grid',
@@ -1131,14 +1163,14 @@ i: any;
       ['Listado de Boletas'],
       [`Fechas: Desde ${this.formatDate(new Date(this.filter.from))} hasta ${this.formatDate(new Date(this.filter.until))}`],
       [],
-      ['Nombre', 'Periodo', 'Fecha de Emisión', 'Estado', 'Monto Actual', 'Monto Pagado'] // Cambié 'ID Propietario' a 'Nombre'
+      ['Periodo', 'Fecha de Emisión', 'Nombre', 'Estado', 'Monto Actual', 'Monto Pagado'] // Cambié 'ID Propietario' a 'Nombre'
     ];
 
     const excelData = this.expenses.map((expense: ExpenseGenerationExpenseInterface) => {
       return [
-        this.getOwnerName(expense.owner_id), // Usamos el nombre completo del propietario
         expense.period,
         this.formatDate(new Date(expense.issueDate)),
+        this.getOwnerName(expense.owner_id),
         expense.status,
         `$${(expense.actual_amount || 0).toFixed(2)}`, // Aseguramos dos decimales y mostramos $0.00 si es null o 0
         `$${(expense.amount_payed || 0).toFixed(2)}`   // Aseguramos dos decimales y mostramos $0.00 si es null o 0

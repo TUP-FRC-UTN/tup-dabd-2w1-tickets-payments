@@ -3,14 +3,15 @@ import { ExpenseGenerationHeaderComponent } from '../expense-generation-header/e
 import { ExpenseGenerationExpenseService } from '../expense-generation-services/expense-generation-expense.service';
 import { ExpenseGenerationExpenseInterface } from '../expense-generation-interfaces/expense-generation-expense-interface';
 import { Observable } from 'rxjs';
-import { CommonModule } from '@angular/common';
+import { CommonModule, registerLocaleData } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExpenseGenerationCardComponent } from '../expense-generation-card/expense-generation-card.component';
 import { ExpenseGenerationPaymentService } from '../expense-generation-services/expense-generation-payment.service';
 import { response, Router } from 'express';
 import { RouterOutlet } from '@angular/router';
+import localeEsAr from '@angular/common/locales/es-AR';
 import { ExpenseGenerationNavbarComponent } from "../expense-generation-navbar/expense-generation-navbar.component";
-
+registerLocaleData(localeEsAr, 'es-AR');
 @Component({
   selector: 'app-expense-generation-user-view',
   standalone: true,
@@ -50,7 +51,8 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
 
   ngOnInit() {
     const today = new Date();
-
+    const localDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000);
+    this.endDate = localDate.toISOString().split('T')[0];
     this.getExpensesByOwner();
     this.selectedExpenses = this.expenseService.getSelectedExpenses();
     this.calculateTotal();

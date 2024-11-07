@@ -24,7 +24,7 @@
   </div>
 
   <div class="d-flex justify-content-between align-items-center my-4">
-    <h4>Total a Pagar: {{ total | currency : "USD" }}</h4>
+    <h4>Total a Pagar: {{ total | currency:'ARS':'symbol':'1.2-2':'es-AR' }}</h4>
 
     <!-- Button trigger modal -->
 
@@ -185,7 +185,7 @@
       <tr>
         <td>{{ item.period | date : "dd/MM" }}</td>
         <td>{{ item.status }}</td>
-        <td>${{ item.amount_payed | number : "1.2-2" }}</td>
+        <td>{{ item.amount_payed | currency:'ARS':'symbol':'1.2-2':'es-AR'}}</td>
 
         <td (click)="openPdf(item.id)">
           <a href="#">

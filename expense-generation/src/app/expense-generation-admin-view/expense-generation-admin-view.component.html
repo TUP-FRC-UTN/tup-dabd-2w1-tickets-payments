@@ -30,25 +30,26 @@
           <!-- Status Select -->
           <div class="col-md-2">
             <div class="position-relative">
-              <button class="form-control d-flex justify-content-between align-items-center" type="button"
-                (click)="showStatusDropdown = !showStatusDropdown" [attr.aria-expanded]="showStatusDropdown">
-                <span class="text-truncate me-2">{{ getSelectedStatusText() }}</span>
-                <i class="bi" [class.bi-chevron-down]="!showStatusDropdown" [class.bi-chevron-up]="showStatusDropdown">
-                </i>
-              </button>
+                <button class="form-control d-flex justify-content-between align-items-center" type="button"
+                    (click)="showStatusDropdown = !showStatusDropdown" [attr.aria-expanded]="showStatusDropdown">
+                    <input type="text" class="form-control border-0" placeholder="Seleccionar Estado" style="margin-left: 0%;;"
+                          [(ngModel)]="statusFilter" (click)="$event.stopPropagation()"
+                          (input)="showStatusDropdown = true" [value]="getSelectedStatusText()" />
+                    <i class="bi" [class.bi-chevron-down]="!showStatusDropdown" [class.bi-chevron-up]="showStatusDropdown" style="width: 8%;" ></i>
+                </button>
 
-              <ul class="dropdown-menu w-100 p-2 m-0 shadow-sm" [class.show]="showStatusDropdown"
-                (click)="$event.stopPropagation()" style="max-height: 200px; overflow-y: auto;">
-                <li *ngFor="let status of listStatus" class="dropdown-item px-2 py-1" style="cursor: pointer;">
-                  <div class="form-check m-0">
-                    <input type="checkbox" class="form-check-input" [id]="'estado-' + status"
-                      [checked]="isSelectedStatus(status)" (change)="toggleStatus(status)">
-                    <label class="form-check-label ms-2 w-100" [for]="'estado-' + status" style="cursor: pointer;">
-                      {{ status }}
-                    </label>
-                  </div>
-                </li>
-              </ul>
+                <ul class="dropdown-menu w-100 p-2 m-0 shadow-sm" [class.show]="showStatusDropdown"
+                    (click)="$event.stopPropagation()" style="max-height: 200px; overflow-y: auto;">
+                    <li *ngFor="let status of filteredStatusList()" class="dropdown-item px-2 py-1" style="cursor: pointer;">
+                        <div class="form-check m-0">
+                            <input type="checkbox" class="form-check-input" [id]="'estado-' + status"
+                                [checked]="isSelectedStatus(status)" (change)="toggleStatus(status)">
+                            <label class="form-check-label ms-2 w-100" [for]="'estado-' + status" style="cursor: pointer;">
+                                {{ status }}
+                            </label>
+                        </div>
+                    </li>
+                </ul>
             </div>
           </div>
 
@@ -89,7 +90,7 @@
           <!-- Results Table -->
           <div class="table-responsive">
             <table class="table table-striped border border-3 table-hover ">
-              <thead class="table-light border-bottom border-dark">
+              <thead class="table-light   ">
                 <tr>
                   <th (click)="ordenarPor('period')" class="text-start">
                     Periodo
@@ -122,9 +123,9 @@
                   <td class="text-start">{{ getOwnerName(expense.owner_id) }}</td>
                   <td class="text-end">{{ getOwnerDni(expense.owner_id) }}</td>
                   <td class="text-nowrap text-end">{{ getOwnerPlots(expense.owner_id) }}</td>
-                  <td class="text-nowrap text-end">$ {{ expense.first_expiration_amount | number:'1.2-2' }}</td>
-                  <td class="text-nowrap text-end">$ {{ expense.second_expiration_amount | number:'1.2-2' }}</td>
-                  <td class="text-nowrap text-end">$ {{ expense.actual_amount | number:'1.2-2' }}</td>
+                  <td class="text-nowrap text-end"> {{ expense.first_expiration_amount | currency:'ARS':'symbol':'1.2-2':'es-AR'}}</td>
+                  <td class="text-nowrap text-end">{{ expense.second_expiration_amount | currency:'ARS':'symbol':'1.2-2':'es-AR'}}</td>
+                  <td class="text-nowrap text-end"> {{ expense.actual_amount | currency:'ARS':'symbol':'1.2-2':'es-AR'}}</td>
                   <td class="text-center">
                     <button class="btn btn-light btn-sm" type="button" data-bs-toggle="modal"
                       data-bs-target="#detallesModal" (click)="seeDetails(expense)">
@@ -211,78 +212,93 @@
   <!-- Cambiar Multiplicadores -->
 
   <!-- Modal Principal de Multiplicadores -->
-  <div class="modal fade" id="multipliersModal" tabindex="-1" aria-labelledby="multipliersModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="multipliersModalLabel">Configuración de Expensas</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="onModalClose()"
-            aria-label="Close"></button>
+<div class="modal fade" id="multipliersModal" tabindex="-1" aria-labelledby="multipliersModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="multipliersModalLabel">Configuración de Expensas</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="onModalClose()" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Mensaje de error -->
+        <div *ngIf="multiplierError" class="alert alert-danger">
+          {{ multiplierError }}
         </div>
-        <div class="modal-body">
-          
 
-          <!-- Mensaje de error -->
-          <div *ngIf="multiplierError" class="alert alert-danger">
-            {{ multiplierError }}
-          </div>
+        <!-- Formulario -->
+        <div [class.d-none]="isLoadingMultipliers">
 
-          <!-- Formulario -->
-          <div [class.d-none]="isLoadingMultipliers">
-            <!-- Día de Generación -->
-            <div class="mb-4">
-              <label for="generationDayInput" class="form-label">Día de Generación de Expensas:</label>
-              <div class="input-group">
-                <input type="number" id="generationDayInput" [(ngModel)]="generationDay" class="form-control" min="1"
-                  max="28" [class.is-invalid]="!isValidGenerationDay()"
-                  [disabled]="!!fieldModified && fieldModified !== 'generationDay'"
-                  (focus)="onFieldFocus('generationDay')" (blur)="onFieldBlur()"
-                  (ngModelChange)="onFieldChange('generationDay')" />
-                <span class="input-group-text">del mes</span>
+          <!-- Día de Generación -->
+          <div class="mb-4">
+            <div class="row">
+              <div class="col-md-4">
+                <label for="generationDayInput" class="form-label">Día de Generación de Expensas:</label>
               </div>
-              <div class="form-text" [class.text-danger]="!isValidGenerationDay()">
-                El día debe estar entre 1 y 28
-              </div>
-            </div>
-
-            <hr class="my-4">
-
-            <!-- Multiplicadores -->
-            <div class="mb-3">
-              <label for="latePaymentInput" class="form-label">Porcentaje de pagos atrasados:</label>
-              <div class="input-group">
-                <input type="number" id="latePaymentInput" [(ngModel)]="latePaymentPercentage" class="form-control"
-                  min="0" max="100" [disabled]="!!fieldModified && fieldModified !== 'latePayment'"
-                  (focus)="onFieldFocus('latePayment')" (blur)="onFieldBlur()"
-                  (ngModelChange)="onFieldChange('latePayment')" />
-                <span class="input-group-text">%</span>
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label for="expirationInput" class="form-label">Porcentaje de vencimiento:</label>
-              <div class="input-group">
-                <input type="number" id="expirationInput" [(ngModel)]="expirationPercentage" class="form-control"
-                  min="0" max="100" [disabled]="!!fieldModified && fieldModified !== 'expiration'"
-                  (focus)="onFieldFocus('expiration')" (blur)="onFieldBlur()"
-                  (ngModelChange)="onFieldChange('expiration')" />
-                <span class="input-group-text">%</span>
+              <div class="col-md-8">
+                <div class="input-group">
+                  <input type="number" id="generationDayInput" [(ngModel)]="generationDay" class="form-control" min="1"
+                    max="28" [class.is-invalid]="!isValidGenerationDay()"
+                    [disabled]="!!fieldModified && fieldModified !== 'generationDay'"
+                    (focus)="onFieldFocus('generationDay')" (blur)="onFieldBlur()"
+                    (ngModelChange)="onFieldChange('generationDay')" />
+                  <span class="input-group-text">del mes</span>
+                </div>
+                <div class="form-text" [class.text-danger]="!isValidGenerationDay()">
+                  El día debe estar entre 1 y 28
+                </div>
               </div>
             </div>
           </div>
+
+
+          <!-- Multiplicadores -->
+          <div class="mb-3">
+            <div class="row">
+              <div class="col-md-4">
+                <label for="latePaymentInput" class="form-label">Porcentaje de pagos atrasados:</label>
+              </div>
+              <div class="col-md-8">
+                <div class="input-group">
+                  <input type="number" id="latePaymentInput" [(ngModel)]="latePaymentPercentage" class="form-control"
+                    min="0" max="100" [disabled]="!!fieldModified && fieldModified !== 'latePayment'"
+                    (focus)="onFieldFocus('latePayment')" (blur)="onFieldBlur()"
+                    (ngModelChange)="onFieldChange('latePayment')" />
+                  <span class="input-group-text">%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="row">
+              <div class="col-md-4">
+                <label for="expirationInput" class="form-label">Porcentaje de vencimiento:</label>
+              </div>
+              <div class="col-md-8">
+                <div class="input-group">
+                  <input type="number" id="expirationInput" [(ngModel)]="expirationPercentage" class="form-control"
+                    min="0" max="100" [disabled]="!!fieldModified && fieldModified !== 'expiration'"
+                    (focus)="onFieldFocus('expiration')" (blur)="onFieldBlur()"
+                    (ngModelChange)="onFieldChange('expiration')" />
+                  <span class="input-group-text">%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
-            (click)="onModalClose()">Cerrar</button>
-          <button type="button" class="btn btn-primary" (click)="handleSaveClick()"
-            [disabled]="isLoadingMultipliers || !fieldModified || !isValidGenerationDay()">
-            Guardar
-          </button>
-        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="onModalClose()">Cerrar</button>
+        <button type="button" class="btn btn-primary" (click)="handleSaveClick()"
+          [disabled]="isLoadingMultipliers || !fieldModified || !isValidGenerationDay()">
+          Guardar
+        </button>
       </div>
     </div>
   </div>
+</div>
 
   <!-- Modal de Observación -->
   <div class="modal fade" id="observationModal" tabindex="-1" aria-labelledby="observationModalLabel"
@@ -317,211 +333,250 @@
   </div>
 
   <!-- Modal de Observación de Expensa -->
-  <div class="modal fade" id="observationModalExpenses" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Justificación de los Cambios</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label for="observationInput" class="form-label">Por favor, explique el motivo de los cambios:</label>
-            <textarea id="observationInput" [(ngModel)]="observation" class="form-control" rows="3" required></textarea>
+<div class="modal fade" id="observationModalExpenses" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Justificación de los Cambios</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <div class="modal-body">
+        <p class="mb-4">¿Está seguro de guardar los cambios?</p>
+
+        <!-- Justificación -->
+        <div class="row align-items-center mb-3">
+          <label for="observationInput" class="col-3 form-label mb-0">Justificación:</label>
+          <div class="col-9">
+            <textarea
+              id="observationInput"
+              [(ngModel)]="observation"
+              class="form-control"
+              rows="3"
+              required
+            ></textarea>
           </div>
-          <!-- Resumen de cambios -->
-          <div class="mt-3 p-3 bg-light rounded" *ngIf="getChangeSummaryExpenses().length > 0">
-            <h6>Resumen de cambios:</h6>
-            <ul class="mb-0">
-              <li *ngFor="let change of getChangeSummaryExpenses()">{{ change }}</li>
-            </ul>
-          </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-primary" (click)="saveChangesExpenses()"
-            [disabled]="!observation.trim()">
-            Confirmar
-          </button>
+        <!-- Resumen de cambios -->        
         </div>
+
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          data-bs-dismiss="modal"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="saveChangesExpenses()"
+          [disabled]="!observation.trim()"
+        >
+          Confirmar
+        </button>
       </div>
     </div>
   </div>
+</div>
 
   <!-- Advanced Filters Modal -->
-  <div class="modal fade" id="filtrosAvanzados" tabindex="-1" aria-labelledby="filtrosAvanzadosLabel"
-    aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="filtrosAvanzadosLabel">Filtros Avanzados</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <!-- Min Amount -->
-          <div class="mb-3">
-            <div class="row">
-            <div class="col-4">
+<div class="modal fade" id="filtrosAvanzados" tabindex="-1" aria-labelledby="filtrosAvanzadosLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="filtrosAvanzadosLabel">Filtros Avanzados</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Min Amount -->
+        <div class="mb-3">
+          <div class="row">
+            <div class="col-md-4">
               <label for="montoMinimo" class="form-label">Monto Mínimo</label>
             </div>
-            <div class="col-8">
+            <div class="col-md-8">
               <input
-              type="number"
-              class="form-control"
-              id="montoMinimo"
-              (input)="updateFilterField('minimumAmount', $event)"
-              name="montoMinimo"
-            >
+                type="number"
+                class="form-control"
+                id="montoMinimo"
+                (input)="updateFilterField('minimumAmount', $event)"
+                name="montoMinimo"
+                placeholder="Ingresa el monto mínimo"
+              />
             </div>
           </div>            
-          </div>
-          <div class="mb-3">             
-            <label for="periodo" class="form-label">Periodo</label>
-            <div class="dropdown">
-              <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownPeriodos"
-                data-bs-toggle="dropdown" aria-expanded="false">
-                Seleccionar Periodos
-              </button>
-              <ul class="dropdown-menu" aria-labelledby="dropdownPeriodos">
-                <li *ngFor="let periodo of periodos">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" [value]="periodo.value"
-                      (change)="toggleSelectedPeriod(periodo.value)"
-                      [checked]="filter.selectedPeriod.includes(periodo.value)">
-                    <label class="form-check-label">
-                      {{ periodo.label }}
-                    </label>
-                  </div>
-                </li>
-              </ul>
-          </div>
-          </div>
-          <div class="mb-3">
-            <label for="typedoc" class="form-label">Tipo Documento</label>
-            <select class="form-select" id="doc" [(ngModel)]="filter.typedoc" name="doc">
-              <option *ngFor="let doc of typedoc" [value]="doc">
-                {{doc}}
-              </option>
-            </select>
-          </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-          <button type="button" class="btn btn-primary" (click)="searchTickets()"
-            data-bs-dismiss="modal">Aplicar</button>
-          <button type="button" class="btn btn-primary bi bi-trash" title="Limpiar Filtros"
-            (click)="cleanFilters()"></button>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Details Modal -->
-  <div class="modal fade" id="detallesModal" tabindex="-1" aria-labelledby="detallesModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="detallesModalLabel">Detalles de la Boleta</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body" *ngIf="selectedExpense">
-          <div class="container">
-            <!-- Grid layout for better organization -->
-            <div class="row g-3">
-              <!-- Información del Propietario -->
-              <div class="col-12">
-                <div class="card">
-                  <div class="card-body">
-                    <h6 class="card-title">Información del Propietario</h6>
-                    <p class="mb-0">{{ this.getOwnerName(this.selectedExpense.id) }}</p>
-                  </div>
-                </div>
-              </div>
+        <!-- Periodo -->
+        <div class="mb-3">
+          <div class="row">
+            <div class="col-md-4">
+              <label for="periodo" class="form-label">Periodo</label>
+            </div>
+            <div class="col-md-8">
+              <div class="dropdown position-relative">
+                <input
+                  type="text"
+                  class="form-control w-100 text-dark bg-white"
+                  placeholder="Seleccionar Periodos"
+                  [(ngModel)]="periodFilter"
+                  (click)="showPeriodDropdown = !showPeriodDropdown"
+                  [attr.aria-expanded]="showPeriodDropdown"
+                  (input)="showPeriodDropdown = true"
+                  style="padding-right: 2rem;"
+                />
 
-              <!-- Fechas de Vencimiento -->
-              <div class="col-md-6">
-                <div class="card">
-                  <div class="card-body">
-                    <h6 class="card-title">Primer Vencimiento</h6>
-                    <div class="mb-2">
-                      <label class="form-label">Fecha</label>
-                      <input type="date" [(ngModel)]="updatedExpense.first_expiration_date"
-                        (change)="validateExpirationDates()" class="form-control"
-                        [max]="updatedExpense.second_expiration_date">
-                    </div>
-                    <div>
-                      <label class="form-label">Monto</label>
-                      <p class="form-control-plaintext">${{ selectedExpense.first_expiration_amount }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                <!-- Icono de flecha hacia abajo -->
+                <i
+                  class="bi bi-chevron-down position-absolute"
+                  [class.rotate-180]="showPeriodDropdown"
+                  style="top: 50%; right: 10px; transform: translateY(-50%); cursor: pointer;"
+                  (click)="showPeriodDropdown = !showPeriodDropdown"
+                  aria-hidden="true"
+                ></i>
 
-              <div class="col-md-6">
-                <div class="card">
-                  <div class="card-body">
-                    <h6 class="card-title">Segundo Vencimiento</h6>
-                    <div class="mb-2">
-                      <label class="form-label">Fecha</label>
-                      <input type="date" [(ngModel)]="updatedExpense.second_expiration_date"
-                        (change)="validateExpirationDates()" class="form-control"
-                        [min]="updatedExpense.first_expiration_date">
+                <!-- Lista de opciones filtradas -->
+                <ul
+                  class="dropdown-menu w-100"
+                  [class.show]="showPeriodDropdown"
+                  (click)="$event.stopPropagation()"
+                  style="max-height: 300px; overflow-y: auto;"
+                >
+                  <li *ngFor="let periodo of filteredPeriodos()" class="dropdown-item">
+                    <div class="form-check">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        [value]="periodo.value"
+                        (change)="toggleSelectedPeriod(periodo.value)"
+                        [checked]="filter.selectedPeriod.includes(periodo.value)"
+                        id="periodo-{{ periodo.value }}"
+                      />
+                      <label class="form-check-label" for="periodo-{{ periodo.value }}">
+                        {{ periodo.label }}
+                      </label>
                     </div>
-                    <div>
-                      <label class="form-label">Monto</label>
-                      <input type="number" [(ngModel)]="updatedExpense.second_expiration_amount"
-                        (ngModelChange)="calculateExpirationMultiplier()" class="form-control"
-                        [min]="selectedExpense.first_expiration_amount">
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Estado -->
-              <div class="col-12">
-                <div class="card">
-                  <div class="card-body">
-                    <h6 class="card-title">Estado</h6>
-                    <select [(ngModel)]="updatedExpense.status" class="form-select">
-                      <option value="Pago">Pago</option>
-                      <option value="Pendiente">Pendiente</option>
-                      <option value="Exceptuado">Exceptuado</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Documentos -->
-              <div class="col-12">
-                <div class="card">
-                  <div class="card-body">
-                    <h6 class="card-title">Documentos</h6>
-                    <div class="d-flex gap-2">
-                      <button class="btn btn-outline-danger" (click)="openPdf(selectedExpense.id)">
-                        <i class="bi bi-file-earmark-pdf"></i> Ver Factura
-                      </button>
-                      <button class="btn btn-outline-primary" *ngIf="selectedExpense.payment_id"
-                        (click)="openReceipt(selectedExpense)">
-                        <i class="bi bi-file-earmark-text"></i> Ver Comprobante
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-          <button type="button" class="btn btn-primary" data-bs-dismiss="modal" [disabled]="!hasChangesExpense()"
-            (click)="openObservationModal()">
-            Guardar
-          </button>
+
+        <!-- Tipo Documento -->
+        <div class="mb-3">
+          <div class="row">
+            <div class="col-md-4">
+              <label for="typedoc" class="form-label">Tipo de Documento</label>
+            </div>
+            <div class="col-md-8">
+              <select class="form-select" id="typedoc" [(ngModel)]="filter.typedoc" name="typedoc">
+                <option *ngFor="let doc of typedoc" [value]="doc">
+                  {{ doc }}
+                </option>
+              </select>
+            </div>
+          </div>
         </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
       </div>
     </div>
   </div>
+</div>
 
+
+  <!-- Details Modal -->
+<div class="modal fade" id="detallesModal" tabindex="-1" aria-labelledby="detallesModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="detallesModalLabel">Detalles de la Boleta</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedExpense">
+        <div class="container">
+          <div class="row g-3">
+            <!-- Información del Propietario -->
+            <div class="col-12">
+              <h6>Información del Propietario</h6>
+              <p class="mb-0">{{ getOwnerName(selectedExpense.owner_id) }}</p>
+            </div>
+
+            <!-- Fechas de Vencimiento -->
+            <div class="col-md-6">
+              <h6>Primer Vencimiento</h6>
+              <div class="d-flex align-items-center">
+                <label class="form-label me-2 mb-0">Fecha</label>
+                <input type="date" [(ngModel)]="updatedExpense.first_expiration_date"
+                  (change)="validateExpirationDates()" class="form-control"
+                  [max]="updatedExpense.second_expiration_date">
+              </div>
+              <div class="d-flex align-items-center mt-2">
+                <label class="form-label me-2 mb-0">Monto</label>
+                <p class="form-control-plaintext mb-0">{{ selectedExpense.first_expiration_amount | number:'1.2-2' }}</p>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <h6>Segundo Vencimiento</h6>
+              <div class="d-flex align-items-center">
+                <label class="form-label me-2 mb-0">Fecha</label>
+                <input type="date" [(ngModel)]="updatedExpense.second_expiration_date"
+                  (change)="validateExpirationDates()" class="form-control"
+                  [min]="updatedExpense.first_expiration_date">
+              </div>
+              <div class="d-flex align-items-center mt-2">
+                <label class="form-label me-2 mb-0">Monto</label>
+                <input type="number" [(ngModel)]="updatedExpense.second_expiration_amount" class="form-control">
+              </div>
+            </div>
+
+            <!-- Estado -->
+            <div class="col-12">
+              <div class="d-flex align-items-center">
+                <label class="form-label me-2 mb-0">Estado</label>
+                <select [(ngModel)]="updatedExpense.status" class="form-select">
+                  <option value="Pago">Pago</option>
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Exceptuado">Exceptuado</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Documentos -->
+            <div class="col-12">
+              <h6>Documentos</h6>
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-danger" (click)="openPdf(selectedExpense.id)">
+                  <i class="bi bi-file-earmark-pdf"></i> Ver Factura
+                </button>
+                <button class="btn btn-outline-primary" *ngIf="selectedExpense.payment_id"
+                  (click)="openReceipt(selectedExpense)">
+                  <i class="bi bi-file-earmark-text"></i> Ver Comprobante
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" [disabled]="!hasChangesExpense()"
+          (click)="openObservationModal()">
+          Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
   <!-- Modal de info -->
   <div class="modal fade" id="infoModal" role="dialog">
     <div class="modal-dialog">
