@@ -7,7 +7,6 @@ import { CommonModule, registerLocaleData } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExpenseGenerationCardComponent } from '../expense-generation-card/expense-generation-card.component';
 import { ExpenseGenerationPaymentService } from '../expense-generation-services/expense-generation-payment.service';
-import { response, Router } from 'express';
 import { RouterOutlet } from '@angular/router';
 import localeEsAr from '@angular/common/locales/es-AR';
 import { ExpenseGenerationNavbarComponent } from "../expense-generation-navbar/expense-generation-navbar.component";
@@ -20,7 +19,6 @@ registerLocaleData(localeEsAr, 'es-AR');
     CommonModule,
     FormsModule,
     ExpenseGenerationCardComponent,
-    RouterOutlet,
     ExpenseGenerationNavbarComponent
 ],
   templateUrl: './expense-generation-user-view.component.html',
@@ -37,16 +35,27 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
   selectedExpenses: ExpenseGenerationExpenseInterface[] = [];
   paidExpenses: ExpenseGenerationExpenseInterface[] = [];
   unpaidExpenses: ExpenseGenerationExpenseInterface[] = [];
+  expenses: ExpenseGenerationExpenseInterface[] = [];
+
 
   // Filtros
   startDate: string = '';
   endDate: string = '';
+  minAmount: number | null = null;
+  maxAmount: number | null = null;
+  isLoading: boolean = false;
 
   minEndDate: string = '';
 
   // Variables
   total: number = 0;
   ownerId: number = 3;
+  itemsPerPage: number = 5;
+  currentPage: number = 1;
+  totalItems: number = 0;
+  totalPages: number = 0;
+  pagedExpenses: any[] = [];
+  visiblePages: number[] = [];
   @Output() status = new EventEmitter<number>();
 
   ngOnInit() {
@@ -152,6 +161,19 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
           );
         }
 
+         // Filtro por importe
+         if (this.minAmount !== null) {
+          filteredExpenses = filteredExpenses.filter(
+            (expense) => expense.amount_payed >= this.minAmount!
+          );
+        }
+
+        if (this.maxAmount !== null) {
+          filteredExpenses = filteredExpenses.filter(
+            (expense) => expense.amount_payed <= this.maxAmount!
+          );
+        }
+
         this.paidExpenses = filteredExpenses.filter(
           (expense) => expense.status === 'Pago'
         );
@@ -170,6 +192,50 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
       this.applyFilters();
     }
   }
+
+
+  onItemsPerPageChange() {
+    this.currentPage = 1; 
+    this.calculateTotalPages();
+    this.updateVisiblePages();
+    this.updatePagedExpenses();
+  }
+
+  calculateTotalPages() {
+    this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
+  }
+
+  updateVisiblePages() {
+    const maxVisiblePages = 3;
+    let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
+
+    // Ajustar startPage si estamos cerca del final
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    this.visiblePages = Array.from(
+      { length: endPage - startPage + 1 },
+      (_, i) => startPage + i
+    );
+  }
+
+  updatePagedExpenses() {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = Math.min(startIndex + this.itemsPerPage, this.totalItems);
+    this.pagedExpenses = this.expenses.slice(startIndex, endIndex);
+  }
+
+  goToPage(page: number) {
+    if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
+      this.currentPage = page;
+      this.updateVisiblePages();
+      this.updatePagedExpenses();
+    }
+  }
+
+
 
   //--------------Pago de Mercado Pago----------------
   payWithMP(expenses: ExpenseGenerationExpenseInterface[]) {

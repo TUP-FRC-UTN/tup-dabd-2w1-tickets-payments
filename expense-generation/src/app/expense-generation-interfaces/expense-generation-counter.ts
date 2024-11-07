@@ -1,14 +1,14 @@
 export interface ExpenseGenerationCounter {
     ownerId: number;
     period: string;
-    issueDate: string;
-    firstExpirationDate: string;
-    secondExpirationDate: string;
+    issueDate: number[];
+    firstExpirationDate: number[];
+    secondExpirationDate: number[];
     firstExpirationAmount: number;
     amountPayed: number;
     status: string;
     approved: boolean;
-    paymentPlatform: string | null;
+    paymentPlatform: string;
     paymentMethod: string | null;
-    paymentIntentId: string | null;
-}
+    paymentIntentId: string;
+  }
