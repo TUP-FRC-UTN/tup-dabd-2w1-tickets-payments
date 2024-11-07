@@ -36,6 +36,51 @@ interface MultiplierData {
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ExpenseGenerationAdminViewComponent implements OnInit {
+// Formatear los períodos
+loadMultipliersData() {
+  this.isLoadingMultipliers = true;
+
+  forkJoin({
+    multipliers: this.expenseService.getMultipliers(),
+    generationDay: this.expenseService.getGenerationDay()
+  }).subscribe({
+    next: ({ multipliers, generationDay }) => {
+      this.latePaymentPercentage = multipliers.latePayment * 100;
+      this.expirationPercentage = multipliers.expiration * 100;
+      this.generationDay = generationDay;
+    },
+    error: (error) => {
+      console.error('Error loading multipliers data', error);
+    },
+    complete: () => {
+      this.isLoadingMultipliers = false;
+    }
+  });
+}
+
+saveAllChanges() {
+  const observation = 'Updated configuration'; // Customize this if needed
+
+  // Convert percentages back to decimal for the update
+  const latePaymentMultiplier = this.latePaymentPercentage / 100;
+  const expirationMultiplier = this.expirationPercentage / 100;
+
+  // Call all update methods simultaneously
+  forkJoin([
+    this.expenseService.updateLatePaymentMultiplier(latePaymentMultiplier, observation),
+    this.expenseService.updateExpirationMultiplier(expirationMultiplier, observation),
+    this.expenseService.updateGenerationDay(this.generationDay, observation)
+  ]).subscribe({
+    next: () => {
+      console.log('All fields updated successfully');
+      this.onModalClose(); // Optionally close the modal here
+    },
+    error: (error) => {
+      console.error('Error updating fields', error);
+      this.multiplierError = 'There was an error updating the fields. Please try again.';
+    }
+  });
+}
   selectedExpense: ExpenseGenerationExpenseInterface | null = null;
 i: any;
   seeDetails(expense: ExpenseGenerationExpenseInterface) {

@@ -127,17 +127,34 @@
                   <td class="text-nowrap text-end">{{ expense.second_expiration_amount | currency:'ARS':'symbol':'1.2-2':'es-AR'}}</td>
                   <td class="text-nowrap text-end"> {{ expense.actual_amount | currency:'ARS':'symbol':'1.2-2':'es-AR'}}</td>
                   <td class="text-center">
-                    <button class="btn btn-light btn-sm" type="button" data-bs-toggle="modal"
-                      data-bs-target="#detallesModal" (click)="seeDetails(expense)">
-                      <i class="bi bi-three-dots-vertical"></i>
-                    </button>
-                  </td>
+                    <div class="dropdown">
+                        <button class="btn btn-light btn-sm" type="button" 
+                                id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                          <li>
+                              <a class="dropdown-item" href="#" data-bs-toggle="modal" 
+                                 data-bs-target="#viewMoreModal" (click)="seeDetails(expense)">
+                                  Ver más
+                              </a>
+                          </li>
+                          <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="#" data-bs-toggle="modal" 
+                                   data-bs-target="#detallesModal" (click)="seeDetails(expense)">
+                                    Editar
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </td>
                 </tr>
               </tbody>
             </table>
 
             <!-- Pagination controls -->
-            <div class="d-flex justify-content-between align-items-center border-top pt-3">
+            <div class="d-flex justify-content-between align-items-center">
               <!-- Items per page dropdown -->
               <div class="d-flex align-items-center">
                 <select class="form-select form-select-sm" style="width: auto" [(ngModel)]="itemsPerPage"
@@ -212,7 +229,8 @@
   <!-- Cambiar Multiplicadores -->
 
   <!-- Modal Principal de Multiplicadores -->
-<div class="modal fade" id="multipliersModal" tabindex="-1" aria-labelledby="multipliersModalLabel" aria-hidden="true">
+<div class="modal fade" id="multipliersModal" tabindex="-1" aria-labelledby="multipliersModalLabel" aria-hidden="true"
+(shown.bs.modal)="loadMultipliersData()">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -573,6 +591,75 @@
           (click)="openObservationModal()">
           Guardar
         </button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Ver Más Modal -->
+<div class="modal fade" id="viewMoreModal" tabindex="-1" aria-labelledby="viewMoreModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="viewMoreModalLabel">Ver Más</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedExpense">
+        <div class="container">
+          <!-- Grid layout for better organization -->
+          <div class="row g-3">
+            <!-- Información General -->
+            <h5 class="card-title">Información General</h5>
+            <div class="col-6">
+              <div class="">
+                <div class="card-body">
+                  <p><strong>Nombre:</strong> {{ this.getOwnerName(this.selectedExpense.id) }}</p>
+                  <p><strong>Tipo de DNI:</strong> {{ selectedExpense.dni_type }}</p>
+                  <p><strong>Periodo:</strong> {{ selectedExpense.period }}</p>
+                  <p><strong>Fecha de Emisión:</strong> {{ selectedExpense.issueDate | date: 'dd/MM/yyyy' }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Estado y Pago -->
+            <div class="col-md-6">
+              <div class="">
+                <div class="card-body">
+                  <p><strong>Estado:</strong> {{ selectedExpense.status }}</p>
+                  <p><strong>Método de Pago:</strong> {{ selectedExpense.payment_method || 'En espera...' }}</p>
+                  <p><strong>Plataforma de Pago:</strong> {{ selectedExpense.payment_platform || 'En espera...' }}</p>
+
+                  <!-- <p><strong>Fecha de Pago:</strong> {{ selectedExpense.paymentDate | date: 'dd/MM/yyyy' }}</p> -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Vencimientos -->
+            <div class="col-md-6">
+              <div class="">
+                <div class="card-body">
+                  <p><strong>Primer Vencimiento:</strong> {{ selectedExpense.first_expiration_date | date: 'dd/MM/yyyy' }}</p>
+                  <p><strong>Monto Primer Vencimiento:</strong> ${{ selectedExpense.first_expiration_amount }}</p>
+                  <p><strong>Segundo Vencimiento:</strong> {{ selectedExpense.second_expiration_date | date: 'dd/MM/yyyy' }}</p>
+                  <p><strong>Monto Segundo Vencimiento:</strong> ${{ selectedExpense.second_expiration_amount }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Monto Actual y Pagado -->
+            <div class="col-md-6">
+              <div class="">
+                <div class="card-body">
+                  <p><strong>Monto Actual:</strong> ${{ selectedExpense.actual_amount }}</p>
+                  <p><strong>Monto Pagado:</strong> ${{ selectedExpense.amount_payed || 0 }}</p>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
       </div>
     </div>
   </div>
