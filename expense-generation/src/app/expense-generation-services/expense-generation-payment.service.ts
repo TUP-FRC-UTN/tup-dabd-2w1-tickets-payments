@@ -30,6 +30,14 @@ export class ExpenseGenerationPaymentService {
     );
   }
 
+  confirmPayment(paymentIntentId: string): Observable<any> {
+    return this.http.post(`${this.StripeURL}/confirm-payment/${paymentIntentId}`, {}).pipe(
+      catchError(error => {
+        console.error("Error confirmando el pago:", error);
+        throw error;
+      })
+    );
+  }
 
   //---------------------------------------------Mercado Pago----------------------------------------------
 

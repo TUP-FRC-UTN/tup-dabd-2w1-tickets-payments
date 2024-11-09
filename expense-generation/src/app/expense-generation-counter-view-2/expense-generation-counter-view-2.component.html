@@ -1,4 +1,3 @@
-
 <app-expense-generation-navbar></app-expense-generation-navbar>
 
 <br>
@@ -19,14 +18,14 @@
                             <label class="form-label text-secondary">Período Desde</label>
                             <div class="input-group">
                                 <input type="month" class="form-control border-0 bg-light" [(ngModel)]="periodFrom"
-                                    (ngModelChange)="aplyFilters()" [max]="periodTo" [min]="minDateFrom" >
+                                    (ngModelChange)="aplyFilters()" [max]="periodTo" [min]="minDateFrom">
                             </div>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label text-secondary">Período Hasta</label>
                             <div class="input-group">
                                 <input type="month" class="form-control border-0 bg-light" [(ngModel)]="periodTo"
-                                    (ngModelChange)="aplyFilters()" [min]="periodFrom" >
+                                    (ngModelChange)="aplyFilters()" [min]="periodFrom">
                             </div>
                         </div>
 
@@ -183,13 +182,13 @@
                                     <input type="radio" class="btn-check" name="paymentStatus" id="approved"
                                         [(ngModel)]="paymentStatus" value="Aprobado" (ngModelChange)="aplyFilters()">
                                     <label class="btn btn-outline-primary" for="approved">
-                                        <i class="bi bi-check-circle me-1"></i>Ingresos
+                                        <i class="bi bi-check-circle me-1"></i>Aprobados
                                     </label>
 
                                     <input type="radio" class="btn-check" name="paymentStatus" id="rejected"
                                         [(ngModel)]="paymentStatus" value="Rechazado" (ngModelChange)="aplyFilters()">
                                     <label class="btn btn-outline-primary" for="rejected">
-                                        <i class="bi bi-x-circle me-1"></i>Deudas
+                                        <i class="bi bi-x-circle me-1"></i>Rechazados
                                     </label>
                                 </div>
                             </div>
@@ -199,6 +198,7 @@
             </div>
         </div>
         }
+
     </div>
 
 
@@ -228,7 +228,6 @@
                                 <h5 class="card-title text-secondary mb-1">Comparacion de Ingresos</h5>
                                 <small class="text-secondary">Rendimiento por periodo</small>
                             </div>
-                            <div class="badge bg-warning px-3 py-2">algo</div>
                         </div>
                         <google-chart [type]="columnChartType" [data]="columnChartData" [options]="columnChartOptions"
                             class="w-100 expanded-chart-content">
@@ -237,95 +236,94 @@
                 </div>
             </div>
 
-             <!-- KPIs para el gráfico de columnas -->
+            <!-- KPIs para el gráfico de columnas -->
             <div class="col-md-3" *ngIf="status === 1">
-    <div class="card border-0 shadow-lg mb-3 rounded-4 h-25 w-100">
-        <div class="card-body">
-            <h6 class="text-secondary mb-2">{{ paymentStatus === 'Aprobado' ? 'Total Recaudado' : 'Total Morosos' }}</h6>
-            <h3 class="mb-0">{{ columnKPIs.totalPeriod | number:'1.0-0' }}
-                <small class="text-muted">{{ paymentStatus === 'Aprobado' ? '$' : '' }}</small>
-            </h3>
-        </div>
-    </div>
+                <div class="card border-0 shadow-lg mb-3 rounded-4 h-25 w-100">
+                    <div class="card-body">
+                        <h6 class="text-secondary mb-2">{{ paymentStatus === 'Aprobado' ? 'Total Recaudado' : 'Total
+                            Morosos' }}</h6>
+                        <h3 class="mb-0">{{ columnKPIs.totalPeriod | number:'1.0-0' }}
+                            <small class="text-muted">{{ paymentStatus === 'Aprobado' ? '$' : '' }}</small>
+                        </h3>
+                    </div>
+                </div>
 
-    <div class="card border-0 shadow-lg mb-3 rounded-4 h-25 w-100">
-        <div class="card-body">
-            <h6 class="text-secondary mb-2">Promedio Mensual</h6>
-            <h3 class="mb-0">{{ columnKPIs.monthlyAverage | number:'1.0-0' }}
-                <small class="text-muted">{{ paymentStatus === 'Aprobado' ? '$' : '' }}</small>
-            </h3>
-        </div>
-    </div>
+                <div class="card border-0 shadow-lg mb-3 rounded-4 h-25 w-100">
+                    <div class="card-body">
+                        <h6 class="text-secondary mb-2">Promedio Mensual</h6>
+                        <h3 class="mb-0">{{ columnKPIs.monthlyAverage | number:'1.0-0' }}
+                            <small class="text-muted">{{ paymentStatus === 'Aprobado' ? '$' : '' }}</small>
+                        </h3>
+                    </div>
+                </div>
 
-    <div class="card border-0 shadow-lg mb-3 rounded-4 h-25 w-100">
-        <div class="card-body">
-            <h6 class="text-secondary mb-2">Mejor Mes</h6>
-            <h3 class="mb-0">{{ columnKPIs.bestMonth.value | number:'1.0-0' }}
-                <small class="text-muted">{{ paymentStatus === 'Aprobado' ? '$' : '' }}</small>
-            </h3>
-            <small class="text-muted">{{ columnKPIs.bestMonth.month }}</small>
-        </div>
-    </div>
-             </div>
+                <div class="card border-0 shadow-lg mb-3 rounded-4 h-25 w-100">
+                    <div class="card-body">
+                        <h6 class="text-secondary mb-2">Mejor Mes</h6>
+                        <h3 class="mb-0">{{ columnKPIs.bestMonth.value | number:'1.0-0' }}
+                            <small class="text-muted">{{ paymentStatus === 'Aprobado' ? '$' : '' }}</small>
+                        </h3>
+                        <small class="text-muted">{{ columnKPIs.bestMonth.month }}</small>
+                    </div>
+                </div>
+            </div>
 
             <!-- KPIs para el gráfico de pie -->
             <div class="col-md-3" *ngIf="status === 2">
-    <div class="card border-0 shadow-lg mb-3 rounded-4 h-25 w-100">
-        <div class="card-body">
-            <h6 class="text-secondary mb-2">Método más usado</h6>
-            <h3 class="mb-0">{{ pieKPIs.topMethod.name }}</h3>
-            <small class="text-muted">{{ pieKPIs.topMethod.percentage | number:'1.0-1' }}% del total</small>
-        </div>
-    </div>
+                <div class="card border-0 shadow-lg mb-3 rounded-4 h-25 w-100">
+                    <div class="card-body">
+                        <h6 class="text-secondary mb-2">Método más usado</h6>
+                        <h3 class="mb-0">{{ pieKPIs.topMethod.name }}</h3>
+                        <small class="text-muted">{{ pieKPIs.topMethod.percentage | number:'1.0-1' }}% del total</small>
+                    </div>
+                </div>
 
-    <div class="card border-0 shadow-lg mb-3 rounded-4 h-25 w-100">
-        <div class="card-body">
-            <h6 class="text-secondary mb-2">Total Transacciones</h6>
-            <h3 class="mb-0">{{ pieKPIs.totalTransactions | number }}</h3>
-        </div>
-    </div>
+                <div class="card border-0 shadow-lg mb-3 rounded-4 h-25 w-100">
+                    <div class="card-body">
+                        <h6 class="text-secondary mb-2">Total Transacciones</h6>
+                        <h3 class="mb-0">{{ pieKPIs.totalTransactions | number }}</h3>
+                    </div>
+                </div>
 
-    <div class="card border-0 shadow-lg mb-3 rounded-4 h-25 w-100">
-        <div class="card-body">
-            <h6 class="text-secondary mb-2">Promedio por Transacción</h6>
-            <div *ngFor="let method of pieKPIs.averagePerMethod | keyvalue">
-                <small class="text-muted">{{ method.key }}: ${{ method.value | number:'1.0-0' }}</small>
+                <div class="card border-0 shadow-lg mb-3 rounded-4 h-25 w-100">
+                    <div class="card-body">
+                        <h6 class="text-secondary mb-2">Promedio por Transacción</h6>
+                        <div *ngFor="let method of pieKPIs.averagePerMethod | keyvalue">
+                            <small class="text-muted">{{ method.key }}: ${{ method.value | number:'1.0-0' }}</small>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-            </div>
 
-            <!-- KPIs para el gráfico de líneas -->
+            <!-- TOP 5 KPIs -->
             <div class="col-md-3" *ngIf="status === 3">
-    <div class="card border-0 shadow-lg mb-3 rounded-4 h-25 w-100">
-        <div class="card-body">
-            <h6 class="text-secondary mb-2">Crecimiento Mensual</h6>
-            <h3 class="mb-0" [class.text-success]="lineKPIs.monthlyGrowth > 0" 
-                [class.text-danger]="lineKPIs.monthlyGrowth < 0">
-                {{ lineKPIs.monthlyGrowth | number:'1.0-1' }}%
-            </h3>
-        </div>
-    </div>
+                <div class="card border-0 shadow-lg mb-3 rounded-4 h-25 w-100">
+                    <div class="card-body">
+                        <h6 class="text-secondary mb-2">Boleta más alta</h6>
+                        <h3 class="mb-0">{{ topExpenseKPIs.highestAmount | number:'1.0-0' }}
+                            <small class="text-muted">$</small>
+                        </h3>
+                    </div>
+                </div>
 
-    <div class="card border-0 shadow-lg mb-3 rounded-4 h-25 w-100">
-        <div class="card-body">
-            <h6 class="text-secondary mb-2">Valor Máximo</h6>
-            <h3 class="mb-0">${{ lineKPIs.maxValue.value | number:'1.0-0' }}</h3>
-            <small class="text-muted">{{ lineKPIs.maxValue.month }}</small>
-        </div>
-    </div>
+                <div class="card border-0 shadow-lg mb-3 rounded-4 h-25 w-100">
+                    <div class="card-body">
+                        <h6 class="text-secondary mb-2">Promedio Top 5</h6>
+                        <h3 class="mb-0">{{ topExpenseKPIs.averageTop5 | number:'1.0-0' }}
+                            <small class="text-muted">$</small>
+                        </h3>
+                    </div>
+                </div>
 
-    <div class="card border-0 shadow-lg mb-3 rounded-4 h-25 w-100">
-        <div class="card-body">
-            <h6 class="text-secondary mb-2">Tendencia Trimestral</h6>
-            <h3 class="mb-0" [class.text-success]="lineKPIs.quarterlyTrend > 0"
-                [class.text-danger]="lineKPIs.quarterlyTrend < 0">
-                {{ lineKPIs.quarterlyTrend | number:'1.0-1' }}%
-            </h3>
-        </div>
-    </div>
+                <div class="card border-0 shadow-lg mb-3 rounded-4 h-25 w-100">
+                    <div class="card-body">
+                        <h6 class="text-secondary mb-2">Total Top 5</h6>
+                        <h3 class="mb-0">{{ topExpenseKPIs.totalTop5 | number:'1.0-0' }}
+                            <small class="text-muted">$</small>
+                        </h3>
+                    </div>
+                </div>
             </div>
-           
 
 
 
@@ -345,7 +343,6 @@
                                 <h5 class="card-title text-secondary mb-1">Promedios de pagos</h5>
                                 <small class="text-secondary">Metodos de pago</small>
                             </div>
-                            <div class="badge bg-primary px-3 py-2">Cant-total : 40</div>
                         </div>
                         <google-chart [type]="pieChartType" [data]="pieChartData" [options]="pieChartOptions"
                             class="w-100 " style="height:88%">
@@ -355,9 +352,9 @@
             </div>
 
 
-            <!-- Grafico de lineas -->
+            <!-- TOP 5 Chart -->
             <div class="col-9" *ngIf="status === 3">
-                <div class="card border-0 shadow-lg rounded-4 h-100">
+                <div class="card border-0 shadow-lg rounded-4 h-75">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <div class="back-arrow" (click)="makeBig(0)">
@@ -368,57 +365,114 @@
                                 </svg>
                             </div>
                             <div>
-                                <h5 class="card-title text-secondary mb-1">Evolución de Pagos</h5>
-                                <small class="text-secondary">Tendencia mensual</small>
+                                <h5 class="card-title text-secondary mb-1">TOP 5</h5>
+                                <small class="text-secondary">Expensas más caras</small>
                             </div>
-                            <div class="badge bg-success px-3 py-2">+15.4%</div>
                         </div>
-                        <google-chart [type]="lineChartType" [data]="lineChartData" [options]="lineChartOptions"
-                            class="w-100" style="height:88%">
+                        <google-chart [type]="barChartType" [data]="top5ChartData" [options]="top5ChartOptions"
+                            class="w-100" style="height: 400px">
                         </google-chart>
                     </div>
                 </div>
             </div>
+
         </div>
+
+
         <!-- --------------------------------------------------------------------------------------------------- -->
 
-       <!-- KPIs generales (status 0) -->
-<div class="col-md-4" *ngIf="status === 0">
-    <!-- KPI General para Columnas -->
-    <div class="card border-0 shadow-lg rounded-4 h-25 mb-4 hover-scale" (click)="makeBig(1)">
-        <div class="card-body">
-            <h6 class="text-secondary mb-2">Resumen de {{ paymentStatus === 'Aprobado' ? 'Ingresos' : 'Morosos' }}</h6>
-            <h3 class="mb-0">{{ columnKPIs.totalPeriod | number:'1.0-0' }}
-                <small class="text-muted">{{ paymentStatus === 'Aprobado' ? '$' : '' }}</small>
-            </h3>
-            <small class="text-muted">Promedio mensual: {{ columnKPIs.monthlyAverage | number:'1.0-0' }}{{ paymentStatus === 'Aprobado' ? '$' : '' }}</small>
+        <!-- KPIs generales (status 0) -->
+        <div class="col-md-3" *ngIf="status === 0">
+
+            <!-- KPI General para Columnas -->
+            <div class="row">
+                <div class="col">
+                    <div class="card border-0 shadow-lg rounded-4  mb-4 hover-scale" (click)="makeBig(1)"
+                        style="background-color: #d8ffedde;">
+                        <div class="card-body position-relative">
+                            <!-- Icono de dinero -->
+                            <i class="bi bi-cash-stack position-absolute top-50 end-0 translate-middle-y me-4"
+                                style="font-size: 2.5rem; color: #198754; opacity: 0.8;"></i>
+
+                            <!-- Contenido existente -->
+                            <div class="pe-5"> <!-- Añadimos padding-end para dar espacio al icono -->
+                                <h6 class="text-secondary mb-2">Resumen de {{ paymentStatus === 'Aprobado' ? 'Ingresos'
+                                    : 'Morosos' }}</h6>
+                                <h3 class="mb-0">{{ columnKPIs.totalPeriod | number:'1.0-0' }}
+                                    <small class="text-muted">{{ paymentStatus === 'Aprobado' ? '$' : '' }}</small>
+                                </h3>
+                                <small class="text-muted">Promedio mensual: {{ columnKPIs.monthlyAverage |
+                                    number:'1.0-0' }}{{ paymentStatus === 'Aprobado' ? '$' : '' }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- KPI General para Métodos de Pago -->
+            <div class="row">
+                <div class="col">
+                    <div class="card border-0 shadow-lg rounded-4  mb-4 hover-scale" (click)="makeBig(2)">
+                        <div class="card-body">
+                            <h6 class="text-secondary mb-2">Métodos de Pago</h6>
+                            <h3 class="mb-0">{{ pieKPIs.totalTransactions | number }}</h3>
+                            <small class="text-muted">Método principal: {{ pieKPIs.topMethod.name }} ({{
+                                pieKPIs.topMethod.percentage | number:'1.0-1' }}%)</small>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- NUEVO: KPI Boleta más alta -->
+    <div class="row">
+        <div class="col">
+            <div class="card border-0 shadow-lg rounded-4 mb-4 hover-scale" (click)="makeBig(3)"
+                style="background-color: #fff3cd;">
+                <div class="card-body position-relative">
+                    <i class="bi bi-receipt position-absolute top-50 end-0 translate-middle-y me-4"
+                        style="font-size: 2.5rem; color: #856404; opacity: 0.8;"></i>
+                    <div class="pe-5">
+                        <h6 class="text-secondary mb-2">Boleta más alta</h6>
+                        <h3 class="mb-0">{{ topExpenseKPIs.highestAmount | number:'1.0-0' }}
+                            <small class="text-muted">$</small>
+                        </h3>
+                        <small class="text-muted">Promedio Top 5: {{ topExpenseKPIs.averageTop5 | number:'1.0-0' }}$</small>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- KPI General para Métodos de Pago -->
-    <div class="card border-0 shadow-lg rounded-4 h-25 mb-4 hover-scale" (click)="makeBig(2)">
-        <div class="card-body">
-            <h6 class="text-secondary mb-2">Métodos de Pago</h6>
-            <h3 class="mb-0">{{ pieKPIs.totalTransactions | number }}</h3>
-            <small class="text-muted">Método principal: {{ pieKPIs.topMethod.name }} ({{ pieKPIs.topMethod.percentage | number:'1.0-1' }}%)</small>
+    <!-- NUEVO: KPI Método más usado con promedio -->
+    <div class="row">
+        <div class="col">
+            <div class="card border-0 shadow-lg rounded-4 mb-4 hover-scale" (click)="makeBig(2)"
+                style="background-color: #e7f1ff;">
+                <div class="card-body position-relative">
+                    <i class="bi bi-graph-up position-absolute top-50 end-0 translate-middle-y me-4"
+                        style="font-size: 2.5rem; color: #004085; opacity: 0.8;"></i>
+                    <div class="pe-5">
+                        <h6 class="text-secondary mb-2">{{ pieKPIs.topMethod.name }} - Promedio</h6>
+                        <h3 class="mb-0">{{ pieKPIs.averagePerMethod[pieKPIs.topMethod.name] | number:'1.0-0' }}
+                            <small class="text-muted">$</small>
+                        </h3>
+                        <small class="text-muted">{{ pieKPIs.topMethod.percentage | number:'1.0-1' }}% de las transacciones</small>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- KPI General para Tendencias -->
-    <div class="card border-0 shadow-lg rounded-4 h-25 hover-scale" (click)="makeBig(3)">
-        <div class="card-body">
-            <h6 class="text-secondary mb-2">Tendencia General</h6>
-            <h3 class="mb-0" [class.text-success]="lineKPIs.monthlyGrowth > 0" 
-                [class.text-danger]="lineKPIs.monthlyGrowth < 0">
-                {{ lineKPIs.monthlyGrowth | number:'1.0-1' }}%
-            </h3>
-            <small class="text-muted">Último trimestre: {{ lineKPIs.quarterlyTrend | number:'1.0-1' }}%</small>
+
+
+
         </div>
-    </div>
-</div>
 
 
-        <div class="col-12 col-lg-4 mb-4 " *ngIf="status === 0">
+        <!-- Grafico de columnas  -->
+        <div class="col-12 col-lg-5 mb-4" *ngIf="status === 0">
             <div class="card border-0 shadow-lg rounded-4 h-100 transition-all hover-scale" (click)="makeBig(1)">
                 <div class="card-body ">
                     <div class="d-flex justify-content-center align-items-center ">
@@ -427,7 +481,7 @@
                             <small class="text-secondary ">Rendimiento por periodo</small>
                         </div>
                     </div>
-                    
+
                     <google-chart [type]="columnChartType" [data]="columnChartData" [options]="columnChartOptions"
                         class="w-100">
                     </google-chart>
@@ -435,6 +489,8 @@
             </div>
         </div>
 
+
+        <!-- Graficos de torta y top 5 -->
         <div class="col-12 col-lg-4" *ngIf="status === 0">
             <div class="mb-4">
                 <div class="card border-0 shadow-lg rounded-4 h-100 transition-all hover-scale" (click)="makeBig(2)">
@@ -457,13 +513,14 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-center align-items-center mb-4">
                             <div>
-                                <h5 class="card-title text-secondary mb-1">Evolución de Pagos</h5>
-                                <small class="text-secondary">Tendencia mensual</small>
+                                <h5 class="card-title text-secondary mb-1">TOP 5</h5>
+                                <small class="text-secondary">Expensas mas caras</small>
                             </div>
                         </div>
-                        <google-chart [type]="lineChartType" [data]="lineChartData" [options]="lineChartOptions"
+                        <google-chart [type]="barChartType" [data]="top5ChartData" [options]="top5ChartOptions"
                             class="w-100">
                         </google-chart>
+
                     </div>
                 </div>
             </div>
@@ -485,7 +542,8 @@
                 <p>Bienvenido al Dashboard de Generación de Gastos. Este panel te permite:</p>
                 <ul>
                     <li>Visualizar estadísticas de gastos en tiempo real, incluyendo gráficos y tablas detalladas.</li>
-                    <li>Generar reportes personalizados basados en diferentes criterios como fechas, categorías y más.</li>
+                    <li>Generar reportes personalizados basados en diferentes criterios como fechas, categorías y más.
+                    </li>
                     <li>Acceder a un historial completo de tus gastos y realizar análisis comparativos.</li>
                 </ul>
             </div>

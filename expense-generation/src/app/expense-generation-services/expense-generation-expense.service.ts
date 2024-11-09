@@ -4,6 +4,7 @@ import { catchError, forkJoin, map, mergeMap, Observable, throwError } from 'rxj
 import { ExpenseGenerationExpenseInterface } from '../expense-generation-interfaces/expense-generation-expense-interface';
 import { Owner } from '../expense-generation-interfaces/owner';
 import { ExpenseUpdateDTO } from '../expense-generation-interfaces/expense-update.interface';
+import { ExpensePaymentUpdateDTO } from '../expense-generation-interfaces/expense-generation-payment-interface';
 @Injectable({
   providedIn: 'root'
 })
@@ -93,10 +94,27 @@ export class ExpenseGenerationExpenseService {
     return  this.selectedExpenses = this.selectedExpenses.filter(expense => expense.id !== id)
   }
 
-updateStatus(expensePaymentUpdateDTO: any): Observable<any> {
-  const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-  return this.http.put<any>(`${this.ApiBaseUrl}update/status`, expensePaymentUpdateDTO, { headers });
+updateStatus(expensePaymentUpdateDTOs: ExpensePaymentUpdateDTO[]): Observable<any> {
+  const headers = new HttpHeaders()
+    .set('Content-Type', 'application/json')
+    // Agregamos el header requerido con una observación por defecto
+    .set('X-Update-Observation', 'Actualización de estado por pago con Stripe');
+  
+  // Asegurarnos de que enviamos el array en el formato correcto
+  const payload = expensePaymentUpdateDTOs;
+  
+  return this.http.put<any>(
+    `${this.ApiBaseUrl}update/status`, 
+    payload,
+    { headers }
+  ).pipe(
+    catchError(error => {
+      console.error('Request payload:', payload);
+      return throwError(() => error);
+    })
+  );
 }
+
 
 updateExpense(expenseData: ExpenseUpdateDTO, observation: string): Observable<any> {
   const headers = new HttpHeaders()

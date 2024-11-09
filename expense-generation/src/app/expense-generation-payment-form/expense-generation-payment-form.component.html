@@ -34,7 +34,7 @@
 
             <div class="row mt-5">
               <div class="col-12 col-md-3">
-                <button type="button" class="btn w-100 btn-outline-secondary mt-3" (click)="goBack()">Volver</button>
+                <button type="button" class="btn w-100 btn-outline-secondary mt-3" (click)="goBack()" routerLink="expense-generation-user-view">Volver</button>
               </div>
               <div class="col-12 col-md-9">
                 <button type="submit" class="btn w-100 btn-primary mt-3" [disabled]="processing || paymentForm.invalid">

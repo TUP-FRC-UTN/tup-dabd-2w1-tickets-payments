@@ -7,6 +7,8 @@ import { Stripe, StripeCardElement } from '@stripe/stripe-js';
 import { CurrencyPipe, DatePipe, NgClass, NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from "@angular/common";
 import { loadStripe } from '@stripe/stripe-js';
 import { buffer } from 'stream/consumers';
+import { RouterOutlet, RouterLink } from '@angular/router';
+import { ExpensePaymentUpdateDTO } from '../expense-generation-interfaces/expense-generation-payment-interface';
 
 declare var Swal: any;
 
@@ -15,11 +17,10 @@ declare var Swal: any;
   selector: 'app-expense-generation-payment-form',
   standalone: true,
   imports: [ReactiveFormsModule,
-    NgClass,
     DatePipe,
     CurrencyPipe,
+    RouterLink,
     NgFor,
-    NgIf,
     NgSwitch,
     NgSwitchCase,
     NgSwitchDefault],
@@ -40,6 +41,8 @@ export class ExpenseGenerationPaymentFormComponent implements OnInit {
   expensesToPay: ExpenseGenerationExpenseInterface[] = [];
   paymentIntentId: string = "";
   error: string = '';
+  paymentStatusMessage: string = '';
+  clientSecret: string = "";
   processing: boolean = false;
   paymentSuccessful: boolean = false;
 
@@ -110,10 +113,14 @@ export class ExpenseGenerationPaymentFormComponent implements OnInit {
         throw new Error(result.error.message || "Error al confirmar el pago");
       }
 
-      this.paymentSuccessful = true;
+      this.confirmPayment();
+      
       this.updateExpenseStatus(result.paymentIntent.id);
+      
+      this.paymentSuccessful = true;
 
       //----   sweet alert message   ------
+      
       Swal.fire({
         title: "Pago realizado con exito!",
         text: "Deseas descargar el comprobante ?",
@@ -147,12 +154,6 @@ export class ExpenseGenerationPaymentFormComponent implements OnInit {
               Swal.showLoading();
               // Aquí tu lógica de descarga
               this.openPdf().then(() => {
-                Swal.fire(
-                  "¡Listo!",
-                  "El comprobante se ha descargado correctamente",
-                  "success"
-
-                );
                 this.goBack();
               }).catch(() => {
                 Swal.fire(
@@ -201,6 +202,14 @@ export class ExpenseGenerationPaymentFormComponent implements OnInit {
     return response;
   }
 
+  async confirmPayment() {
+    const resut = await this.checkout.confirmPayment(this.paymentIntentId).toPromise();
+    if (resut == "succeded") {
+      console.log('Payment confirmed successfully', resut);
+    }
+
+  }
+
 
   goBack() {
     this.expenseService.clearSelectedExpenses();
@@ -224,21 +233,41 @@ export class ExpenseGenerationPaymentFormComponent implements OnInit {
   }
 
   updateExpenseStatus(paymentId: string) {
-    const updateDTO = {
-      expenseId: this.expensesToPay[0].id,
+    const updateDTOs: ExpensePaymentUpdateDTO[] = this.expensesToPay.map(expense => ({
+      expenseId: expense.id,
       status: 'Pago',
-      paymentId: paymentId
-    };
-
-    this.expenseService.updateStatus(updateDTO).subscribe(
-      (response) => {
+      paymentId: paymentId,
+      paymentPlatform: 'Stripe',
+      amount: expense.first_expiration_amount
+    }));
+  
+    console.log('Sending payload:', updateDTOs);
+  
+    this.expenseService.updateStatus(updateDTOs).subscribe({
+      next: (response) => {
         console.log('Status updated successfully', response);
+        // Aquí puedes agregar lógica adicional después de una actualización exitosa
       },
-      (error) => {
-        console.error('Error updating status', error);
+      error: (error) => {
+        console.error('Error updating status:', error);
+        let errorMessage = 'No se pudo actualizar el estado de las boletas.';
+        
+        // Manejo específico de errores
+        if (error.status === 400) {
+          errorMessage += ' Verifique los datos enviados.';
+        } else if (error.status === 500) {
+          errorMessage += ' Error interno del servidor.';
+        }
+        
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al actualizar el estado',
+          text: errorMessage,
+        });
       }
-    );
+    });
   }
+
 
 
 }

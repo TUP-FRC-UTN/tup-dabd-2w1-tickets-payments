@@ -7,7 +7,7 @@ import { CommonModule, registerLocaleData } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExpenseGenerationCardComponent } from '../expense-generation-card/expense-generation-card.component';
 import { ExpenseGenerationPaymentService } from '../expense-generation-services/expense-generation-payment.service';
-import { RouterOutlet } from '@angular/router';
+import { RouterLink, RouterOutlet } from '@angular/router';
 import localeEsAr from '@angular/common/locales/es-AR';
 import { ExpenseGenerationNavbarComponent } from "../expense-generation-navbar/expense-generation-navbar.component";
 registerLocaleData(localeEsAr, 'es-AR');
@@ -15,7 +15,7 @@ registerLocaleData(localeEsAr, 'es-AR');
   selector: 'app-expense-generation-user-view',
   standalone: true,
   imports: [
-    ExpenseGenerationHeaderComponent,
+    RouterLink,
     CommonModule,
     FormsModule,
     ExpenseGenerationCardComponent,

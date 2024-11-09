@@ -32,20 +32,19 @@ interface PieChartKPIs {
   };
 }
 
-interface LineChartKPIs {
-  monthlyGrowth: number;
-  maxValue: {
-    month: string;
-    value: number;
-  };
-  quarterlyTrend: number;
+interface TopExpenseKPIs {
+  highestAmount: number;
+  averageTop5: number;
+  totalTop5: number;
 }
+
+
 
 
 @Component({
   selector: 'app-expense-generation-counter-view-2',
   standalone: true,
-  imports: [GoogleChartsModule, FormsModule, CommonModule, ExpenseGenerationHeaderComponent, ExpenseGenerationNavbarComponent],
+  imports: [GoogleChartsModule, FormsModule, CommonModule, ExpenseGenerationNavbarComponent],
   templateUrl: './expense-generation-counter-view-2.component.html',
   styleUrl: './expense-generation-counter-view-2.component.css'
 })
@@ -69,8 +68,8 @@ export class ExpenseGenerationCounterView2Component {
   columnChartData: any[] = [];
 
   pieChartType = ChartType.PieChart;
-  lineChartType = ChartType.LineChart;
   columnChartType = ChartType.ColumnChart;
+  barChartType = ChartType.BarChart;
 
 
   ngOnInit() {
@@ -91,6 +90,7 @@ export class ExpenseGenerationCounterView2Component {
       }
     });
   }
+
   // KPIs
   columnKPIs: ColumnChartKPIs = {
     totalPeriod: 0,
@@ -104,49 +104,65 @@ export class ExpenseGenerationCounterView2Component {
     averagePerMethod: {}
   };
 
-  lineKPIs: LineChartKPIs = {
-    monthlyGrowth: 0,
-    maxValue: { month: '', value: 0 },
-    quarterlyTrend: 0
+ 
+  top5ChartData: any[] = [];
+  topExpenseKPIs: TopExpenseKPIs = {
+    highestAmount: 0,
+    averageTop5: 0,
+    totalTop5: 0
   };
 
-
-  pieChartOptions = {
+  top5ChartOptions = {
     backgroundColor: 'transparent',
-    legend: {
-      position: 'right',
-      textStyle: { color: '#6c757d', fontSize: 17 }
-    },
-    chartArea: { width: '100%', height: '100%' },
-    pieHole: 0.7,
-    height: '80%',
-    slices: {
-      0: { color: '#00BFFF' },  // MP siempre azul
-      1: { color: '#8A2BE2' },  // STRIPE siempre violeta
-      2: { color: '#ACE1AF' }   // EFECTIVO siempre verde
-    },
-    pieSliceTextStyle: {
-      color: 'black',
-      fontSize: 18
-    }
-  };
-
-  lineChartOptions = {
-    backgroundColor: 'transparent',
-    colors: ['#24f73f'],
+    colors: ['#40916c'],
     legend: { position: 'none' },
-    chartArea: { width: '90%', height: '80%' },
-    vAxis: {
-      textStyle: { color: '#6c757d' },
-      format: 'currency'
-    },
+    chartArea: { width: '75%', height: '70%' },
     hAxis: {
-      textStyle: { color: '#6c757d' }
+      textStyle: {
+        color: '#6c757d',
+        fontSize: 12
+      },
+      format: 'currency',
+      formatOptions: {
+        notation: 'compact',
+        compactDisplay: 'short',
+        maximumFractionDigits: 0
+      }
+    },
+    vAxis: {
+      textStyle: { 
+        color: '#6c757d',
+        fontSize: 12
+      }
     },
     animation: {
       duration: 1000,
       easing: 'out',
       startup: true
+    },
+    height: '100%',
+    bar: { groupWidth: '70%' }
+  };
+
+
+  pieChartOptions = {
+    backgroundColor: 'transparent',
+    
+    legend: {
+      position: 'right',
+      textStyle: { color: '#6c757d', fontSize: 17 }
+    },
+    chartArea: { width: '100%', height: '100%' },
+    pieHole: 0,
+    height: '80%',
+    slices: {
+      0: { color: '#8A2BE2' },  // MP siempre azul
+      1: { color: '#00BFFF' },  // STRIPE siempre violeta
+      2: { color: '#ACE1AF' }   // EFECTIVO siempre verde
+    },
+    pieSliceTextStyle: {
+      color: 'black',
+      fontSize: 18
     }
   };
 
@@ -196,8 +212,8 @@ export class ExpenseGenerationCounterView2Component {
 
   aplyFilters() {
     this.updateColumnChart();
-    this.updateLineChart();
     this.updatePieChart();
+    this.updateTop5Chart();
   }
 
   private formatMonthYear(period: string): string {
@@ -308,87 +324,6 @@ export class ExpenseGenerationCounterView2Component {
     };
   }
 
-  private updateLineChart() {
-    const months = this.getAllMonthsInRange();
-    const monthlyData: { [key: string]: number } = {};
-
-    // Inicializar los datos mensuales
-    months.forEach(month => {
-      monthlyData[month] = 0;
-    });
-
-    // Procesar las transacciones
-    this.counterData.forEach(transaction => {
-      const normalizedPeriod = this.convertPeriodToYearMonth(transaction.period);
-      if (normalizedPeriod && months.includes(normalizedPeriod)) {
-        if (this.paymentStatus === 'Aprobado') {
-          if (transaction.amountPayed) {
-            monthlyData[normalizedPeriod] = (monthlyData[normalizedPeriod] || 0) +
-              Number(transaction.amountPayed);
-          }
-        } else {
-          if (transaction.amountPayed === null || transaction.amountPayed === 0 || transaction.status === 'PENDIENTE') {
-            monthlyData[normalizedPeriod] = (monthlyData[normalizedPeriod] || 0) +
-              Number(transaction.firstExpirationAmount);
-          }
-        }
-      }
-    });
-
-    // Preparar datos para el gráfico
-    this.lineChartData = months.map(month => [
-      this.formatMonthYear(month),
-      monthlyData[month]
-    ]);
-
-    // Actualizar opciones del gráfico
-    this.lineChartOptions = {
-      ...this.lineChartOptions,
-      colors: [this.paymentStatus === 'Aprobado' ? '#24f73f' : '#dc3545'],
-    };
-
-    // Calcular KPIs
-    const monthlyValues = Object.entries(monthlyData)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([_, value]) => value);
-
-    // 1. Crecimiento Mensual
-    if (monthlyValues.length >= 2) {
-      const lastMonth = monthlyValues[monthlyValues.length - 1];
-      const previousMonth = monthlyValues[monthlyValues.length - 2];
-      this.lineKPIs.monthlyGrowth = previousMonth !== 0 ? 
-        ((lastMonth - previousMonth) / previousMonth) * 100 : 0;
-    } else {
-      this.lineKPIs.monthlyGrowth = 0;
-    }
-
-    // 2. Valor Máximo
-    const maxValue = Math.max(...Object.values(monthlyData));
-    const maxMonth = Object.entries(monthlyData)
-      .find(([_, value]) => value === maxValue)?.[0] || '';
-    this.lineKPIs.maxValue = {
-      month: this.formatMonthYear(maxMonth),
-      value: maxValue
-    };
-
-    // 3. Tendencia Trimestral
-    if (monthlyValues.length >= 3) {
-      const lastThreeMonths = monthlyValues.slice(-3);
-      const avgLastThree = lastThreeMonths.reduce((sum, val) => sum + val, 0) / 3;
-      const previousThreeMonths = monthlyValues.slice(-6, -3);
-      
-      if (previousThreeMonths.length === 3) {
-        const avgPreviousThree = previousThreeMonths.reduce((sum, val) => sum + val, 0) / 3;
-        this.lineKPIs.quarterlyTrend = avgPreviousThree !== 0 ?
-          ((avgLastThree - avgPreviousThree) / avgPreviousThree) * 100 : 0;
-      } else {
-        this.lineKPIs.quarterlyTrend = 0;
-      }
-    } else {
-      this.lineKPIs.quarterlyTrend = 0;
-    }
-}
-
   private updatePieChart() {
     // Filtrar solo las transacciones del período seleccionado
     const filteredData = this.counterData.filter(transaction => {
@@ -454,6 +389,41 @@ export class ExpenseGenerationCounterView2Component {
         )
       )
     };
+  }
+
+  private updateTop5Chart() {
+    if (!this.counterData || !Array.isArray(this.counterData)) {
+      console.warn('No hay datos para mostrar en el top 5');
+      return;
+    }
+
+    // Filtrar transacciones por período y ordenar por monto
+    const filteredData = this.counterData
+      .filter(transaction => {
+        const transactionPeriod = this.convertPeriodToYearMonth(transaction.period);
+        return transactionPeriod >= this.periodFrom && 
+               transactionPeriod <= this.periodTo &&
+               transaction.amountPayed > 0;
+      })
+      .sort((a, b) => (b.amountPayed || 0) - (a.amountPayed || 0))
+      .slice(0, 5);
+
+    // Preparar datos para el gráfico
+    this.top5ChartData = filteredData.map(transaction => [
+      // Reemplaza 'description' con el campo que ya exista en tu interface
+      `Expensa ${this.formatMonthYear(transaction.period)}`,  // Ejemplo usando solo el período
+      transaction.amountPayed / 1000
+  ]);
+
+    // Actualizar KPIs
+    if (filteredData.length > 0) {
+      const amounts = filteredData.map(t => t.amountPayed);
+      this.topExpenseKPIs = {
+        highestAmount: Math.max(...amounts),
+        averageTop5: amounts.reduce((sum, val) => sum + val, 0) / amounts.length,
+        totalTop5: amounts.reduce((sum, val) => sum + val, 0)
+      };
+    }
   }
 
   private convertPeriodToYearMonth(period: any): string {
