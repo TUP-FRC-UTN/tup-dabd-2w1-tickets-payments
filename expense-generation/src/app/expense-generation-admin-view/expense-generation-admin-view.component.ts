@@ -238,10 +238,11 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
   }
 
   getSelectedStatusText(): string {
-    if (this.statusFilter) {
-      return this.statusFilter;
-    }
-    return this.filter.status ? this.filter.status : '';
+    const selectedStatus = this.filter.status ? this.filter.status.split(',') : [];
+    
+    return selectedStatus.length > 0 
+      ? `Seleccionar Estado (${selectedStatus.length})`
+      : 'Seleccionar Estado';
   }
 
   statusFilter: string = '';
@@ -1302,7 +1303,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
       },
     });
 
-    doc.save(`listado_boletas_${formattedFrom}_${formattedUntil}.pdf`);
+    doc.save(`${formattedFrom}_${formattedUntil}_listado_boletas.pdf`);
   }
 
   // Exportar a Excel
@@ -1355,9 +1356,9 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
 
     XLSX.writeFile(
       workbook,
-      `listado_boletas_${this.formatDate(
+      `${this.formatDate(
         new Date(this.filter.from)
-      )}_${this.formatDate(new Date(this.filter.until))}.xlsx`
+      )}_${this.formatDate(new Date(this.filter.until))}_listado_boletas.xlsx`
     );
   }
 }
