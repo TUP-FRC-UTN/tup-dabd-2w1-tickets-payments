@@ -128,7 +128,7 @@
                   <td class="text-nowrap text-end">{{ getOwnerPlots(expense.owner_id) }}</td>
                   <td class="text-nowrap text-end"> {{ expense.first_expiration_amount | currency:'ARS':'symbol':'1.2-2':'es-AR'}}</td>
                   <td class="text-nowrap text-end">{{ expense.second_expiration_amount | currency:'ARS':'symbol':'1.2-2':'es-AR'}}</td>
-                  <td class="text-nowrap text-end"> {{ expense.actual_amount | currency:'ARS':'symbol':'1.2-2':'es-AR'}}</td>
+                  <td class="text-nowrap text-end"> {{ expense.amount_payed | currency:'ARS':'symbol':'1.2-2':'es-AR'}}</td>
                   <td class="text-center">
                     <div class="dropdown">
                         <button class="btn btn-light btn-sm" type="button" 
@@ -234,124 +234,130 @@
   <!-- Modal Principal de Multiplicadores -->
 <div class="modal fade" id="multipliersModal" tabindex="-1" aria-labelledby="multipliersModalLabel" aria-hidden="true"
 (shown.bs.modal)="loadMultipliersData()">
+<div class="modal-dialog">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title" id="multipliersModalLabel">Configuración de Expensas</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="onModalClose()" aria-label="Close"></button>
+    </div>
+    <div class="modal-body">
+      
+      <!-- Mensaje de error -->
+      <div *ngIf="multiplierError" class="alert alert-danger">
+        {{ multiplierError }}
+      </div>
+
+      <!-- Formulario -->
+      <div [class.d-none]="isLoadingMultipliers">
+
+        <!-- Día de Generación -->
+        <div class="mb-4">
+          <div class="row">
+            <div class="col-md-4">
+              <label for="generationDayInput" class="form-label">Día de Generación de Expensas:</label>
+            </div>
+            <div class="col-md-8">
+              <div class="input-group">
+                <input type="number" id="generationDayInput" [(ngModel)]="generationDay" class="form-control" min="1"
+                  max="28" [class.is-invalid]="!isValidGenerationDay()"
+                  [disabled]="!!fieldModified && fieldModified !== 'generationDay'"
+                  (focus)="onFieldFocus('generationDay')" (blur)="onFieldBlur()"
+                  (ngModelChange)="onFieldChange('generationDay')" />
+                <span class="input-group-text">del mes</span>
+              </div>
+              <div class="form-text" [class.text-danger]="!isValidGenerationDay()">
+                El día debe estar entre 1 y 28
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Multiplicadores -->
+        <div class="mb-3">
+          <div class="row">
+            <div class="col-md-4">
+              <label for="latePaymentInput" class="form-label">Porcentaje de pagos atrasados:</label>
+            </div>
+            <div class="col-md-8">
+              <div class="input-group">
+                <input type="number" id="latePaymentInput" [(ngModel)]="latePaymentPercentage" class="form-control"
+                  min="0" max="100" [disabled]="!!fieldModified && fieldModified !== 'latePayment'"
+                  (focus)="onFieldFocus('latePayment')" (blur)="onFieldBlur()"
+                  (ngModelChange)="onFieldChange('latePayment')" />
+                <span class="input-group-text">%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <div class="row">
+            <div class="col-md-4">
+              <label for="expirationInput" class="form-label">Porcentaje de vencimiento:</label>
+            </div>
+            <div class="col-md-8">
+              <div class="input-group">
+                <input type="number" id="expirationInput" [(ngModel)]="expirationPercentage" class="form-control"
+                  min="0" max="100" [disabled]="!!fieldModified && fieldModified !== 'expiration'"
+                  (focus)="onFieldFocus('expiration')" (blur)="onFieldBlur()"
+                  (ngModelChange)="onFieldChange('expiration')" />
+                <span class="input-group-text">%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="onModalClose()">Cerrar</button>
+      <button type="button" class="btn btn-primary" (click)="handleSaveClick()"
+        [disabled]="isLoadingMultipliers || !fieldModified || !isValidGenerationDay()">
+        Guardar
+      </button>
+    </div>
+  </div>
+</div>
+</div>
+
+  <!-- Modal de Observación -->
+<div class="modal fade" id="observationModal" tabindex="-1" aria-labelledby="observationModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="multipliersModalLabel">Configuración de Expensas</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" (click)="onModalClose()" aria-label="Close"></button>
+        <h5 class="modal-title" id="observationModalLabel">Justificación de los Cambios</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
+      
       <div class="modal-body">
-        
-        <!-- Mensaje de error -->
-        <div *ngIf="multiplierError" class="alert alert-danger">
-          {{ multiplierError }}
+        <p class="mb-4">¿Está seguro de guardar los cambios?</p>
+
+        <!-- Justificación -->
+        <div class="row align-items-center mb-3">
+          <label for="observationInput" class="col-3 form-label mb-0">Justificación:</label>
+          <div class="col-9">
+            <textarea
+              id="observationInput"
+              [(ngModel)]="observation"
+              class="form-control"
+              rows="3"
+              required
+            ></textarea>
+          </div>
         </div>
-
-        <!-- Formulario -->
-        <div [class.d-none]="isLoadingMultipliers">
-
-          <!-- Día de Generación -->
-          <div class="mb-4">
-            <div class="row">
-              <div class="col-md-4">
-                <label for="generationDayInput" class="form-label">Día de Generación de Expensas:</label>
-              </div>
-              <div class="col-md-8">
-                <div class="input-group">
-                  <input type="number" id="generationDayInput" [(ngModel)]="generationDay" class="form-control" min="1"
-                    max="28" [class.is-invalid]="!isValidGenerationDay()"
-                    [disabled]="!!fieldModified && fieldModified !== 'generationDay'"
-                    (focus)="onFieldFocus('generationDay')" (blur)="onFieldBlur()"
-                    (ngModelChange)="onFieldChange('generationDay')" />
-                  <span class="input-group-text">del mes</span>
-                </div>
-                <div class="form-text" [class.text-danger]="!isValidGenerationDay()">
-                  El día debe estar entre 1 y 28
-                </div>
-              </div>
-            </div>
-          </div>
-
-
-          <!-- Multiplicadores -->
-          <div class="mb-3">
-            <div class="row">
-              <div class="col-md-4">
-                <label for="latePaymentInput" class="form-label">Porcentaje de pagos atrasados:</label>
-              </div>
-              <div class="col-md-8">
-                <div class="input-group">
-                  <input type="number" id="latePaymentInput" [(ngModel)]="latePaymentPercentage" class="form-control"
-                    min="0" max="100" [disabled]="!!fieldModified && fieldModified !== 'latePayment'"
-                    (focus)="onFieldFocus('latePayment')" (blur)="onFieldBlur()"
-                    (ngModelChange)="onFieldChange('latePayment')" />
-                  <span class="input-group-text">%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <div class="row">
-              <div class="col-md-4">
-                <label for="expirationInput" class="form-label">Porcentaje de vencimiento:</label>
-              </div>
-              <div class="col-md-8">
-                <div class="input-group">
-                  <input type="number" id="expirationInput" [(ngModel)]="expirationPercentage" class="form-control"
-                    min="0" max="100" [disabled]="!!fieldModified && fieldModified !== 'expiration'"
-                    (focus)="onFieldFocus('expiration')" (blur)="onFieldBlur()"
-                    (ngModelChange)="onFieldChange('expiration')" />
-                  <span class="input-group-text">%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
+        <!-- Resumen de cambios -->
       </div>
+
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="onModalClose()">Cerrar</button>
-        <button type="button" class="btn btn-primary" (click)="handleSaveClick()"
-          [disabled]="isLoadingMultipliers || !fieldModified || !isValidGenerationDay()">
-          Guardar
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="saveChanges()" [disabled]="!observation.trim()">
+          Confirmar
         </button>
       </div>
     </div>
   </div>
 </div>
-
-  <!-- Modal de Observación -->
-  <div class="modal fade" id="observationModal" tabindex="-1" aria-labelledby="observationModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="observationModalLabel">Justificación de los Cambios</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label for="observationInput" class="form-label">Por favor, explique el motivo de los cambios:</label>
-            <textarea id="observationInput" [(ngModel)]="observation" class="form-control" rows="3" required></textarea>
-          </div>
-          <!-- Resumen de cambios -->
-          <div class="mt-3 p-3 bg-light rounded" *ngIf="getChangeSummary().length > 0">
-            <h6>Resumen de cambios:</h6>
-            <ul class="mb-0">
-              <li *ngFor="let change of getChangeSummary()">{{ change }}</li>
-            </ul>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-primary" (click)="saveChanges()" [disabled]="!observation.trim()">
-            Confirmar
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Modal de Observación de Expensa -->
 <div class="modal fade" id="observationModalExpenses" tabindex="-1" role="dialog">
@@ -426,7 +432,6 @@
                 id="montoMinimo"
                 (input)="updateFilterField('minimumAmount', $event)"
                 name="montoMinimo"
-                placeholder="Ingresa el monto mínimo"
               />
             </div>
           </div>            
@@ -495,7 +500,14 @@
               <label for="typedoc" class="form-label">Tipo de Documento</label>
             </div>
             <div class="col-md-8">
-              <select class="form-select" id="typedoc" [(ngModel)]="filter.typedoc" name="typedoc">
+              <select
+                class="form-select"
+                id="typedoc"
+                [(ngModel)]="filter.typedoc"
+                (ngModelChange)="onFilterChange()"
+                name="typedoc"
+              >
+                <option value="">Todos</option>
                 <option *ngFor="let doc of typedoc" [value]="doc">
                   {{ doc }}
                 </option>
@@ -573,18 +585,6 @@
             </div>
 
             <!-- Documentos -->
-            <div class="col-12">
-              <h6>Documentos</h6>
-              <div class="d-flex gap-2">
-                <button class="btn btn-outline-danger" (click)="openPdf(selectedExpense.id)">
-                  <i class="bi bi-file-earmark-pdf"></i> Ver Factura
-                </button>
-                <button class="btn btn-outline-primary" *ngIf="selectedExpense.payment_id"
-                  (click)="openReceipt(selectedExpense)">
-                  <i class="bi bi-file-earmark-text"></i> Ver Comprobante
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </div>

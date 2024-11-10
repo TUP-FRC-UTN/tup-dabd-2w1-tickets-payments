@@ -341,6 +341,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
 
   onModalClose(): void {
     this.resetAllValues();
+    this.fieldModified = null;
   }
 
   hasUnsavedChanges(): boolean {
@@ -566,6 +567,7 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
   }
 
   openObservationModal() {
+    this.observation = '';
     const detallesModalElement = document.getElementById('detallesModal');
     const detallesModal =
       window.bootstrap.Modal.getInstance(detallesModalElement);
@@ -712,29 +714,27 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
 
   handleSaveClick() {
     if (this.hasChanges()) {
-      // Cerrar el modal de multiplicadores
-      const multipliersModalElement =
-        document.getElementById('multipliersModal');
+      // Cierra el modal de multiplicadores
+      const multipliersModalElement = document.getElementById('multipliersModal');
       if (multipliersModalElement) {
-        const multipliersModal = window.bootstrap.Modal.getInstance(
-          multipliersModalElement
-        );
+        const multipliersModal = window.bootstrap.Modal.getInstance(multipliersModalElement);
         if (multipliersModal) {
           multipliersModal.hide();
         }
       }
-
-      // Abrir el modal de observación
-      const observationModalElement =
-        document.getElementById('observationModal');
+  
+      // Restablece fieldModified después de guardar
+      this.fieldModified = null;
+  
+      // Abre el modal de observación
+      const observationModalElement = document.getElementById('observationModal');
       if (observationModalElement) {
-        const observationModal = new window.bootstrap.Modal(
-          observationModalElement
-        );
+        const observationModal = new window.bootstrap.Modal(observationModalElement);
         observationModal.show();
       }
     }
   }
+  
 
   saveChanges() {
     if (!this.observation.trim()) {
@@ -1022,28 +1022,42 @@ export class ExpenseGenerationAdminViewComponent implements OnInit {
   }
 
   searchUsers() {
-    if (!this.searchTerm) {
-      this.pagedExpenses = [...this.expenses]; // Si no hay término de búsqueda, mostrar todo
+    if (!this.searchTerm && !this.filter.typedoc) {
+      // Si no hay término de búsqueda ni filtro por tipo de documento, mostrar todos los elementos
+      this.applyPagination(this.expenses);
       return;
     }
-
-    const searchTermLower = this.searchTerm.toLowerCase();
-
-    this.pagedExpenses = this.expenses.filter((expense) => {
-      // Buscar en múltiples campos
+  
+    const searchTermLower = this.searchTerm ? this.searchTerm.toLowerCase() : '';
+  
+    const filteredExpenses = this.expenses.filter((expense) => {
       const ownerName = this.getOwnerName(expense.owner_id).toLowerCase();
       const ownerDni = this.getOwnerDni(expense.owner_id).toLowerCase();
       const ownerPlots = this.getOwnerPlots(expense.owner_id).toLowerCase();
-
-      // Retornar true si el término de búsqueda está en cualquiera de los campos
-      return (
+      const dniType = this.getOwnerDniType(expense.owner_id);
+      const matchesSearchTerm =
         ownerName.includes(searchTermLower) ||
         ownerDni.includes(searchTermLower) ||
-        ownerPlots.includes(searchTermLower)
-      );
+        ownerPlots.includes(searchTermLower);
+
+      const matchesTypedoc = !this.filter.typedoc || dniType === this.filter.typedoc;
+  
+      return matchesSearchTerm && matchesTypedoc;
     });
+  
+    this.applyPagination(filteredExpenses);
   }
 
+  onFilterChange() {
+    this.searchUsers(); 
+  }
+
+applyPagination(data: any[]) {
+  const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+  const endIndex = startIndex + this.itemsPerPage;
+  this.pagedExpenses = data.slice(startIndex, endIndex);
+  this.totalItems = data.length; 
+}
   selectUser(owner: Owner) {
     this.selectedOwner = owner;
     this.searchTerm = `${owner.name} ${owner.lastname}`;
