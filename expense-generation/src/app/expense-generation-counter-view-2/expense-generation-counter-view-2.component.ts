@@ -4,11 +4,9 @@ import { ExpenseGenerationCounterServiceService } from '../expense-generation-se
 import { GoogleChartsModule } from 'angular-google-charts';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { ExpenseGenerationHeaderComponent } from "../expense-generation-header/expense-generation-header.component";
 import { ExpenseGenerationNavbarComponent } from "../expense-generation-navbar/expense-generation-navbar.component";
 import { ExpenseGenerationCounter } from '../expense-generation-interfaces/expense-generation-counter';
-import { months } from 'moment';
-
+import { NgSelectModule } from '@ng-select/ng-select';
 
 
 // Interfaces para los KPIs
@@ -44,13 +42,15 @@ interface TopExpenseKPIs {
 @Component({
   selector: 'app-expense-generation-counter-view-2',
   standalone: true,
-  imports: [GoogleChartsModule, FormsModule, CommonModule, ExpenseGenerationNavbarComponent],
+  imports: [GoogleChartsModule, NgSelectModule, FormsModule, CommonModule, ExpenseGenerationNavbarComponent],
   templateUrl: './expense-generation-counter-view-2.component.html',
   styleUrl: './expense-generation-counter-view-2.component.css'
 })
 export class ExpenseGenerationCounterView2Component {
 
-  constructor(public counterService: ExpenseGenerationCounterServiceService) { }
+  constructor(public counterService: ExpenseGenerationCounterServiceService) {
+    this.selectedPaymentPlatforms = this.paymentPlatforms.map(p => p.id);
+   }
   counterData: ExpenseGenerationCounter[] = [];
 
 
@@ -58,19 +58,35 @@ export class ExpenseGenerationCounterView2Component {
   periodFrom: string = this.getDefaultFromDate();
   periodTo: string = this.getCurrentYearMonth();
   minDateFrom: string = '2020-01';
+  topMethodName: string = "";
 
-  paymentStatus: string = 'Aprobado';
+  columnPaymentStatus: string = 'Aprobado';
+  pieApprovalStatus: string = 'Aprobado';
   comparisonType: string = 'ingresos';
   morosos: number = 0;
 
+  // seleccion multiple
+  paymentPlatforms = [
+    { id: 'Mercadopago', name: 'Mercado Pago', icon: 'bi bi-credit-card' },
+    { id: 'EFECTIVO', name: 'Efectivo', icon: 'bi bi-cash' },
+    { id: 'STRIPE', name: 'Stripe', icon: 'bi bi-credit-card-2-front' }
+  ];
+
+  selectedPaymentPlatforms: string[] = this.paymentPlatforms.map(p => p.id);
+  
+
+  top5ApprovalStatus: string = 'all';
+  top5PaymentPlatform: string = 'all';
+  top5PaymentMethod: string = 'all';
+
   pieChartData: any[] = [];
-  lineChartData: any[] = [];
   columnChartData: any[] = [];
+  top5ChartData: any[] = [];
+
 
   pieChartType = ChartType.PieChart;
   columnChartType = ChartType.ColumnChart;
-  barChartType = ChartType.BarChart;
-
+  barChartType = ChartType.Table;
 
   ngOnInit() {
     this.counterService.getTransactions().subscribe({
@@ -104,8 +120,6 @@ export class ExpenseGenerationCounterView2Component {
     averagePerMethod: {}
   };
 
- 
-  top5ChartData: any[] = [];
   topExpenseKPIs: TopExpenseKPIs = {
     highestAmount: 0,
     averageTop5: 0,
@@ -113,41 +127,33 @@ export class ExpenseGenerationCounterView2Component {
   };
 
   top5ChartOptions = {
-    backgroundColor: 'transparent',
-    colors: ['#40916c'],
-    legend: { position: 'none' },
-    chartArea: { width: '75%', height: '70%' },
-    hAxis: {
-      textStyle: {
-        color: '#6c757d',
-        fontSize: 12
-      },
-      format: 'currency',
-      formatOptions: {
-        notation: 'compact',
-        compactDisplay: 'short',
-        maximumFractionDigits: 0
-      }
-    },
-    vAxis: {
-      textStyle: { 
-        color: '#6c757d',
-        fontSize: 12
-      }
-    },
-    animation: {
-      duration: 1000,
-      easing: 'out',
-      startup: true
-    },
+    allowHtml: true,
+    showRowNumber: false,
+    width: '100%',
     height: '100%',
-    bar: { groupWidth: '70%' }
+    cssClassNames: {
+      headerRow: 'bg-light text-secondary',
+      tableRow: '',
+      oddTableRow: 'bg-light',
+      selectedTableRow: 'bg-warning',
+      hoverTableRow: 'bg-light'
+    },
+    formatters: [
+      {
+        type: 'NumberFormat',
+        column: 1,
+        options: {
+          prefix: '$ ',
+          fractionDigits: 0,
+          pattern: '#,###'
+        }
+      }
+    ]
   };
-
 
   pieChartOptions = {
     backgroundColor: 'transparent',
-    
+
     legend: {
       position: 'right',
       textStyle: { color: '#6c757d', fontSize: 17 }
@@ -282,7 +288,7 @@ export class ExpenseGenerationCounterView2Component {
     this.counterData.forEach(transaction => {
       const normalizedPeriod = transaction.period;
       if (normalizedPeriod && monthlyData.hasOwnProperty(normalizedPeriod)) {
-        if (this.paymentStatus === 'Aprobado') {
+        if (this.columnPaymentStatus === 'Aprobado') {
           // Contar pagos realizados
           if (transaction.amountPayed && transaction.amountPayed > 0) {
             monthlyData[normalizedPeriod] += Number(transaction.amountPayed) / 1000;
@@ -320,44 +326,49 @@ export class ExpenseGenerationCounterView2Component {
     // Actualizar opciones del gráfico
     this.columnChartOptions = {
       ...this.columnChartOptions,
-      colors: [this.paymentStatus === 'Aprobado' ? '#40916c' : '#9d0208']
+      colors: [this.columnPaymentStatus === 'Aprobado' ? '#40916c' : '#9d0208']
     };
   }
 
   private updatePieChart() {
-    // Filtrar solo las transacciones del período seleccionado
+    // Filtrar solo las transacciones del período seleccionado y por estado de aprobación
     const filteredData = this.counterData.filter(transaction => {
-      const transactionPeriod = this.convertPeriodToYearMonth(transaction.period);
-      return transactionPeriod >= this.periodFrom && transactionPeriod <= this.periodTo;
+        const transactionPeriod = this.convertPeriodToYearMonth(transaction.period);
+        const meetsApprovalFilter = this.pieApprovalStatus === 'Aprobado' ? 
+            transaction.approved : // si es Aprobado, buscar approved = true
+            !transaction.approved; // si es Rechazado, buscar approved = false
+
+        return transactionPeriod >= this.periodFrom && 
+               transactionPeriod <= this.periodTo && 
+               meetsApprovalFilter;
     });
 
     // Agrupar por plataforma de pago y contar transacciones
     const platformCounts = filteredData.reduce((acc: { [key: string]: number }, curr) => {
-      if (curr.amountPayed > 0) {
-        const platform = curr.paymentPlatform || 'EFECTIVO';
-        acc[platform] = (acc[platform] || 0) + 1; // Contar transacciones en lugar de sumar montos
-      }
-      return acc;
+        if (this.pieApprovalStatus === 'Aprobado' ? curr.amountPayed > 0 : true) {
+            const platform = curr.paymentPlatform || 'EFECTIVO';
+            acc[platform] = (acc[platform] || 0) + 1;
+        }
+        return acc;
     }, {});
 
     // Calcular el total de transacciones
     const totalTransactions = Object.values(platformCounts).reduce((sum, count) => sum + count, 0);
 
-    // Convertir conteos a porcentajes
+    // Convertir conteos a porcentajes y formatear los datos
     const chartData = Object.entries(platformCounts)
-      .map(([platform, count]) => {
-        const percentage = (count / totalTransactions) * 100;
-        return [
-          platform === 'MERCADOPAGO' ? 'Mp' :
-            platform === 'EFECTIVO' ? 'Efectivo' : platform,
-          Number(percentage.toFixed(2)) // Redondear a 2 decimales
-        ];
-      })
-      .sort((a, b) => {
-        // Mantener el orden específico: MP, STRIPE, EFECTIVO
-        const order = { 'Mp': 0, 'STRIPE': 1, 'Efectivo': 2 };
-        return (order[a[0] as keyof typeof order] || 0) - (order[b[0] as keyof typeof order] || 0);
-      });
+        .map(([platform, count]) => {
+            const percentage = (count / totalTransactions) * 100;
+            return [
+                platform === 'MERCADOPAGO' ? 'Mp' :
+                    platform === 'EFECTIVO' ? 'Efectivo' : platform,
+                Number(percentage.toFixed(2))
+            ];
+        })
+        .sort((a, b) => {
+            const order = { 'Mp': 0, 'STRIPE': 1, 'Efectivo': 2 };
+            return (order[a[0] as keyof typeof order] || 0) - (order[b[0] as keyof typeof order] || 0);
+        });
 
     this.pieChartData = chartData;
 
@@ -365,66 +376,87 @@ export class ExpenseGenerationCounterView2Component {
     const methodTotals: { [key: string]: { sum: number, count: number } } = {};
 
     filteredData.forEach(transaction => {
-      if (transaction.amountPayed > 0) {
-        const platform = transaction.paymentPlatform || 'EFECTIVO';
-        if (!methodTotals[platform]) {
-          methodTotals[platform] = { sum: 0, count: 0 };
+        if (this.pieApprovalStatus === 'Aprobado' ? transaction.amountPayed > 0 : true) {
+            const platform = transaction.paymentPlatform || 'EFECTIVO';
+            if (!methodTotals[platform]) {
+                methodTotals[platform] = { sum: 0, count: 0 };
+            }
+            methodTotals[platform].sum += transaction.amountPayed || 0;
+            methodTotals[platform].count++;
         }
-        methodTotals[platform].sum += transaction.amountPayed;
-        methodTotals[platform].count++;
-      }
     });
 
     this.pieKPIs = {
-      topMethod: {
-        name: Object.entries(methodTotals)
-          .sort((a, b) => b[1].count - a[1].count)[0]?.[0] || '',
-        percentage: (Object.entries(methodTotals)
-          .sort((a, b) => b[1].count - a[1].count)[0]?.[1].count / totalTransactions) * 100 || 0
-      },
-      totalTransactions,
-      averagePerMethod: Object.fromEntries(
-        Object.entries(methodTotals).map(([method, data]) =>
-          [method, data.sum / data.count]
+        topMethod: {
+            name: Object.entries(methodTotals)
+                .sort((a, b) => b[1].count - a[1].count)[0]?.[0] || '',
+            percentage: totalTransactions > 0 ? 
+                (Object.entries(methodTotals)
+                    .sort((a, b) => b[1].count - a[1].count)[0]?.[1].count / totalTransactions) * 100 : 0
+        },
+        totalTransactions,
+        averagePerMethod: Object.fromEntries(
+            Object.entries(methodTotals).map(([method, data]) =>
+                [method, data.count > 0 ? data.sum / data.count : 0]
+            )
         )
-      )
     };
-  }
+    this.topMethodName = this.pieKPIs.topMethod.name;
+}
 
-  private updateTop5Chart() {
+  public updateTop5Chart() {
     if (!this.counterData || !Array.isArray(this.counterData)) {
       console.warn('No hay datos para mostrar en el top 5');
       return;
-    }
+  }
 
-    // Filtrar transacciones por período y ordenar por monto
-    const filteredData = this.counterData
+  // Filtrar transacciones por período y aplicar filtros adicionales
+  const filteredData = this.counterData
       .filter(transaction => {
-        const transactionPeriod = this.convertPeriodToYearMonth(transaction.period);
-        return transactionPeriod >= this.periodFrom && 
-               transactionPeriod <= this.periodTo &&
-               transaction.amountPayed > 0;
+          const transactionPeriod = this.convertPeriodToYearMonth(transaction.period);
+          const meetsApprovalFilter = this.top5ApprovalStatus === 'all' ? true :
+              this.top5ApprovalStatus === 'approved' ? transaction.approved :
+              !transaction.approved;
+          
+          // Filtro de plataforma usando el array de selección múltiple
+          const meetsPlatformFilter = this.selectedPaymentPlatforms.length === 0 ? true :
+              this.selectedPaymentPlatforms.includes(transaction.paymentPlatform);
+          
+          const meetsMethodFilter = this.top5PaymentMethod === 'all' ? true :
+              transaction.paymentMethod === this.top5PaymentMethod;
+
+          return transactionPeriod >= this.periodFrom &&
+              transactionPeriod <= this.periodTo &&
+              transaction.amountPayed > 0 &&
+              meetsApprovalFilter &&
+              meetsPlatformFilter &&
+              meetsMethodFilter;
       })
       .sort((a, b) => (b.amountPayed || 0) - (a.amountPayed || 0))
       .slice(0, 5);
 
     // Preparar datos para el gráfico
     this.top5ChartData = filteredData.map(transaction => [
-      // Reemplaza 'description' con el campo que ya exista en tu interface
-      `Expensa ${this.formatMonthYear(transaction.period)}`,  // Ejemplo usando solo el período
-      transaction.amountPayed / 1000
-  ]);
+        `Expensa ${this.formatMonthYear(transaction.period)} - ${transaction.paymentPlatform || 'Sin plataforma'}`,
+        transaction.amountPayed / 1000
+    ]);
 
     // Actualizar KPIs
     if (filteredData.length > 0) {
-      const amounts = filteredData.map(t => t.amountPayed);
-      this.topExpenseKPIs = {
-        highestAmount: Math.max(...amounts),
-        averageTop5: amounts.reduce((sum, val) => sum + val, 0) / amounts.length,
-        totalTop5: amounts.reduce((sum, val) => sum + val, 0)
-      };
+        const amounts = filteredData.map(t => t.amountPayed);
+        this.topExpenseKPIs = {
+            highestAmount: Math.max(...amounts),
+            averageTop5: amounts.reduce((sum, val) => sum + val, 0) / amounts.length,
+            totalTop5: amounts.reduce((sum, val) => sum + val, 0),
+        };
+    } else {
+        this.topExpenseKPIs = {
+            highestAmount: 0,
+            averageTop5: 0,
+            totalTop5: 0,
+        };
     }
-  }
+}
 
   private convertPeriodToYearMonth(period: any): string {
     if (!period) {
@@ -463,4 +495,20 @@ export class ExpenseGenerationCounterView2Component {
   makeBig(nro: number) {
     this.status = nro;
   }
+
+  // multiplSelectionsMethods
+    onPaymentPlatformsChange() {
+      this.updateTop5Chart();
+    }
+    toggleSelection(platformId: string) {
+      const index = this.selectedPaymentPlatforms.indexOf(platformId);
+      if (index === -1) {
+          this.selectedPaymentPlatforms.push(platformId);
+      } else {
+          this.selectedPaymentPlatforms.splice(index, 1);
+      }
+      this.updateTop5Chart();
+  }
+  
+    
 }
