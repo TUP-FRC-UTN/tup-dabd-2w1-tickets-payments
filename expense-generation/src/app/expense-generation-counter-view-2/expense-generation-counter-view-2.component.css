@@ -10,8 +10,7 @@
     cursor: pointer;
 }
 
-.back-arrow:hover {
-    transform: scale(1.1);
+.back-arrow {
     cursor: pointer;
 }
 google-chart {
@@ -20,4 +19,25 @@ google-chart {
 }
 
 
+.bg-mp{
+    background-color: rgb(206, 248, 255);
+}
 
+.bg-stripe{
+    background-color: rgb(248, 204, 250);
+}
+
+.bg-efectivo{
+    background-color: #d8ffedde;
+}
+
+
+
+.sticky-section {
+    position: sticky;
+    top: 70px;
+    z-index: 10;
+    background-color: white; 
+  }
+
+  

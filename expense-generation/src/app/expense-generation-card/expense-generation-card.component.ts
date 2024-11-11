@@ -35,10 +35,10 @@ export class ExpenseGenerationCardComponent implements OnInit {
 
   // METODO QUE LE PEGA AL ENDPOINT PARA ABRIR EL PDF
 
-  async openPdf(id: number) {
+  async openPdf(uuid: string) {
     try {
       const response = await fetch(
-        `http://localhost:8021/api/expenses/pdf/${id}`
+        `http://localhost:8021/api/expenses/pdf/${uuid}`
       );
       if (!response.ok) {
         alert('No se pudo cargar el pdf');

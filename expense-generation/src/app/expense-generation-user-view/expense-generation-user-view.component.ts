@@ -1,5 +1,4 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { ExpenseGenerationHeaderComponent } from '../expense-generation-header/expense-generation-header.component';
 import { ExpenseGenerationExpenseService } from '../expense-generation-services/expense-generation-expense.service';
 import { ExpenseGenerationExpenseInterface } from '../expense-generation-interfaces/expense-generation-expense-interface';
 import { Observable } from 'rxjs';
@@ -7,7 +6,7 @@ import { CommonModule, registerLocaleData } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExpenseGenerationCardComponent } from '../expense-generation-card/expense-generation-card.component';
 import { ExpenseGenerationPaymentService } from '../expense-generation-services/expense-generation-payment.service';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import localeEsAr from '@angular/common/locales/es-AR';
 import { ExpenseGenerationNavbarComponent } from "../expense-generation-navbar/expense-generation-navbar.component";
 registerLocaleData(localeEsAr, 'es-AR');
@@ -25,6 +24,9 @@ registerLocaleData(localeEsAr, 'es-AR');
   styleUrl: './expense-generation-user-view.component.css',
 })
 export class ExpenseGenerationUserViewComponent implements OnInit {
+
+   Math = Math;
+
   constructor(
     private expenseService: ExpenseGenerationExpenseService,
     private paymentService: ExpenseGenerationPaymentService
@@ -46,6 +48,7 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
   isLoading: boolean = false;
 
   minEndDate: string = '';
+  modalState: boolean = false;
 
   // Variables
   total: number = 0;
@@ -66,6 +69,15 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
     this.selectedExpenses = this.expenseService.getSelectedExpenses();
     this.calculateTotal();
     console.log(this.selectedExpenses);
+  }
+
+  openModal(){
+    if (this.modalState == true){
+      this.modalState = false;
+    }
+    else{
+      this.modalState = true;
+    }
   }
 
   getExpensesByOwner() {
@@ -95,10 +107,10 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
     this.status.emit(num);
   }
 
-  async openPdf(id: number) {
+  async openPdf(uuid: string) {
     try {
       const response = await fetch(
-        `http://localhost:8021/api/expenses/pdf/${id}`
+        `http://localhost:8021/api/expenses/pdf/${uuid}`
       );
       if (!response.ok) {
         alert('No se pudo cargar el pdf');
