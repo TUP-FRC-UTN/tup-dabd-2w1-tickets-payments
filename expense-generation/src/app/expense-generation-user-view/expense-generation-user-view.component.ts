@@ -265,8 +265,8 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
       0
     );
 
-    const description = `Pago de boletas: ${expenses
-      .map((exp) => exp.id)
+    const description = `Pago de la boleta: ${expenses
+      .map((exp) => exp.period)
       .join(', ')}`;
 
     const paymentData = {

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators} from '@angular/forms';
 import { ExpenseGenerationExpenseInterface } from '../expense-generation-interfaces/expense-generation-expense-interface';
 import { ExpenseGenerationExpenseService } from '../expense-generation-services/expense-generation-expense.service';
 import { ExpenseGenerationPaymentService } from '../expense-generation-services/expense-generation-payment.service';
@@ -53,10 +53,22 @@ export class ExpenseGenerationPaymentFormComponent implements OnInit {
     private router: Router
   ) {
     this.paymentForm = this.formBuilder.group({
-      cardHolderName: ['', Validators.required],
-      dni: ['', Validators.required]
+      cardHolderName: ['', [Validators.required,Validators.minLength(5)]],
+      dni: ['', [Validators.required,this.validDni]],
     });
   }
+
+  validDni(control:FormControl){
+    const dni = control.value;
+    if (dni.length != 8) {
+      return {invalidDni: true};
+    }
+    if (!/^\d+$/.test(dni)) {
+      return { invalidDni: true };
+    }
+    return null;
+  }
+
   async ngOnInit() {
     this.expensesToPay = this.expenseService.getSelectedExpenses();
     this.total = this.expensesToPay.reduce((sum, expense) => sum + expense.actual_amount, 0);
