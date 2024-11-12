@@ -2,7 +2,7 @@ import {Component, EventEmitter, inject, OnInit, Output} from '@angular/core';
 import { ExpenseGenerationExpenseService } from '../expense-generation-services/expense-generation-expense.service';
 import { ExpenseGenerationExpenseInterface } from '../expense-generation-interfaces/expense-generation-expense-interface';
 import { Observable } from 'rxjs';
-import { CommonModule, registerLocaleData } from '@angular/common';
+import {CommonModule, DatePipe, registerLocaleData} from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExpenseGenerationCardComponent } from '../expense-generation-card/expense-generation-card.component';
 import { ExpenseGenerationPaymentService } from '../expense-generation-services/expense-generation-payment.service';
@@ -20,6 +20,7 @@ registerLocaleData(localeEsAr, 'es-AR');
     ExpenseGenerationCardComponent,
     ExpenseGenerationNavbarComponent
 ],
+  providers: [DatePipe],
   templateUrl: './expense-generation-user-view.component.html',
   styleUrl: './expense-generation-user-view.component.css',
 })
@@ -30,7 +31,8 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
   constructor(
     private expenseService: ExpenseGenerationExpenseService,
     private paymentService: ExpenseGenerationPaymentService,
-    private router:Router
+    private router:Router,
+    private datePipe:DatePipe
   ) {}
 
   // Arreglos
@@ -46,7 +48,7 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
   endDate: string = '';
   minAmount: number | null = null;
   maxAmount: number | null = null;
-  isLoading: boolean = false;
+  maxEndDate: string = '';
 
   minEndDate: string = '';
   modalState: boolean = false;
@@ -66,6 +68,8 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
     const today = new Date();
     const localDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000);
     this.endDate = localDate.toISOString().split('T')[0];
+    this.maxEndDate = localDate.toISOString().split('T')[0];
+    this.startDate = new Date(localDate.getFullYear(),0,1).toISOString().split('T')[0];
     this.getExpensesByOwner();
     this.selectedExpenses = this.expenseService.getSelectedExpenses();
     this.calculateTotal();
@@ -264,9 +268,10 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
       (sum, detail) => sum + detail.amount,
       0
     );
+    const initialString:string = expenseDetails.length>1 ? "Pago de las boletas de los periodos:" : "Pago de la boleta del periodo:";
 
-    const description = `Pago de la boleta: ${expenses
-      .map((exp) => exp.period)
+    const description = `${initialString} ${expenses
+      .map((exp) => this.datePipe.transform(exp.period,"MM-yyyy")  )
       .join(', ')}`;
 
     const paymentData = {

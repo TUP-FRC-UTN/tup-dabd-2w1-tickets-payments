@@ -127,7 +127,7 @@
       </div>
       <div class="col-12 col-md-3">
         <label for="dateTo" class="form-label">Hasta:</label>
-        <input type="date" id="dateTo" class="form-control" [(ngModel)]="endDate" [min]="minEndDate"
+        <input type="date" id="dateTo" class="form-control" [(ngModel)]="endDate" [min]="minEndDate" [max]="maxEndDate"
           (ngModelChange)="applyFilters()" />
       </div>
       <div class="col-12 col-md-3">
