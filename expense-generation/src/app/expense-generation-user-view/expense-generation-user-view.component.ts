@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import {Component, EventEmitter, inject, OnInit, Output} from '@angular/core';
 import { ExpenseGenerationExpenseService } from '../expense-generation-services/expense-generation-expense.service';
 import { ExpenseGenerationExpenseInterface } from '../expense-generation-interfaces/expense-generation-expense-interface';
 import { Observable } from 'rxjs';
@@ -6,7 +6,7 @@ import { CommonModule, registerLocaleData } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExpenseGenerationCardComponent } from '../expense-generation-card/expense-generation-card.component';
 import { ExpenseGenerationPaymentService } from '../expense-generation-services/expense-generation-payment.service';
-import { RouterLink } from '@angular/router';
+import {Router, RouterLink} from '@angular/router';
 import localeEsAr from '@angular/common/locales/es-AR';
 import { ExpenseGenerationNavbarComponent } from "../expense-generation-navbar/expense-generation-navbar.component";
 registerLocaleData(localeEsAr, 'es-AR');
@@ -29,7 +29,8 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
 
   constructor(
     private expenseService: ExpenseGenerationExpenseService,
-    private paymentService: ExpenseGenerationPaymentService
+    private paymentService: ExpenseGenerationPaymentService,
+    private router:Router
   ) {}
 
   // Arreglos
@@ -68,16 +69,10 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
     this.getExpensesByOwner();
     this.selectedExpenses = this.expenseService.getSelectedExpenses();
     this.calculateTotal();
-    console.log(this.selectedExpenses);
   }
 
-  openModal(){
-    if (this.modalState == true){
-      this.modalState = false;
-    }
-    else{
-      this.modalState = true;
-    }
+  goToPaymentForm(){
+    this.router.navigateByUrl("expense-generation-payment-form")
   }
 
   getExpensesByOwner() {
@@ -207,7 +202,7 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
 
 
   onItemsPerPageChange() {
-    this.currentPage = 1; 
+    this.currentPage = 1;
     this.calculateTotalPages();
     this.updateVisiblePages();
     this.updatePagedExpenses();
