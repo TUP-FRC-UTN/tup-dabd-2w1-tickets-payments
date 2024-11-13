@@ -4,4 +4,5 @@ export interface ExpensePaymentUpdateDTO {
     paymentId: string;
     paymentPlatform: string;
     amount: number;
+    paymentMethod:string;
   }
