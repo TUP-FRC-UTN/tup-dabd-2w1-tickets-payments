@@ -160,11 +160,14 @@
           <tr>
             <td class="text-nowrap font-monospace">{{ item.period | date : "MM/yyyy" }}</td>
             <td>
-              <span class="badge rounded-pill text-bg-success">
+              <span class="badge rounded-pill text-bg-success" [ngClass]="{
+              'text-bg-success': item.status === 'Pago',
+              'text-bg-danger': item.status === 'Exceptuado'
+              }">
                 {{ item.status }}
               </span>
             </td>
-            <td class="text-nowrap text-end">${{ item.amount_payed | number : "1.2-2" }}</td>
+            <td class="text-nowrap text-end">${{ (item.amount_payed ?? 0) | number : "1.2-2" }}</td>
             <td class="text-center">
               <button class="btn btn-link p-0" (click)="openPdf(item.uuid)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill=""
@@ -177,7 +180,7 @@
               </button>
             </td>
             <td class="text-center">
-              <button class="btn btn-link p-0" (click)="openReceipt(item)">
+              <button class="btn btn-link p-0" (click)="openReceipt(item)" *ngIf="item.status==='Pago'" >
                 <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill=""
                   class="bi bi-file-earmark-pdf-fill" viewBox="0 0 16 16">
                   <path

@@ -255,7 +255,7 @@ export class ExpenseGenerationPaymentFormComponent implements OnInit {
       status: 'Pago',
       paymentId: paymentId,
       paymentPlatform: 'Stripe',
-      amount: expense.first_expiration_amount,
+      amount: expense.actual_amount,
       paymentMethod: "Tarjeta"
     }));
 

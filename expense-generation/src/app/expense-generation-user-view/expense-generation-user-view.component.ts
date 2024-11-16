@@ -86,9 +86,8 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
         (expense) => expense.status !== 'Pago'
       );
       this.paidExpenses = expenses.filter(
-        (expense) => expense.status === 'Pago'
+        (expense) => expense.status === 'Pago' || expense.status === 'Exceptuado'
       );
-      console.log(this.paidExpenses);
     });
   }
 

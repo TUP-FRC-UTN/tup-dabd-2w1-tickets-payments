@@ -54,7 +54,7 @@ export class ExpenseGenerationCardComponent implements OnInit {
   // METODO QUE ENVIA EL MONTO DE LA BOLETA AL COMPONENT PADRE
 
   selectExpense() {
-    if (this.status === false) {
+    if (!this.status) {
       this.expenses.addSelectedExpense(this.expense);
       this.sendAmount.emit(this.expense.actual_amount);
       //  console.log(this.expenses.getSelectedExpenses());
