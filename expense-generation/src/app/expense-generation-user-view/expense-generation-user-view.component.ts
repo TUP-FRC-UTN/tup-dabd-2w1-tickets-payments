@@ -35,6 +35,7 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
     private datePipe:DatePipe
   ) {}
 
+
   // Arreglos
   expenses$!: Observable<ExpenseGenerationExpenseInterface[]>;
   selectedExpenses: ExpenseGenerationExpenseInterface[] = [];
@@ -62,6 +63,7 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
   totalPages: number = 0;
   pagedExpenses: any[] = [];
   visiblePages: number[] = [];
+  hasSelectedExpenses: boolean = false;
   @Output() status = new EventEmitter<number>();
 
   ngOnInit() {
@@ -73,6 +75,7 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
     this.getExpensesByOwner();
     this.selectedExpenses = this.expenseService.getSelectedExpenses();
     this.calculateTotal();
+    this.updateButtonState();
   }
 
   goToPaymentForm(){
@@ -92,17 +95,24 @@ export class ExpenseGenerationUserViewComponent implements OnInit {
   }
 
   calculateTotal() {
-    this.total = this.expenseService
-      .getSelectedExpenses()
-      .reduce((total, expense) => total + expense.actual_amount, 0);
+    const selectedExpenses = this.expenseService.getSelectedExpenses();
+    this.total = selectedExpenses.reduce((total, expense) => total + expense.actual_amount, 0);
+    this.hasSelectedExpenses = selectedExpenses.length > 0;
   }
 
   recibeAmount(amount: number) {
     this.total += amount;
+    this.updateButtonState();
   }
 
-  changeStatusPage(num: number) {
-    this.status.emit(num);
+  private updateButtonState() {
+    this.selectedExpenses = this.expenseService.getSelectedExpenses();
+    this.hasSelectedExpenses = this.selectedExpenses.length > 0;
+  }
+
+  onExpenseSelectionChange() {
+    this.calculateTotal();
+    this.updateButtonState();
   }
 
   async openPdf(uuid: string) {

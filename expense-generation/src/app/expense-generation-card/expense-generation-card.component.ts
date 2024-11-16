@@ -15,6 +15,7 @@ registerLocaleData(localeEsAr, 'es-AR');
 export class ExpenseGenerationCardComponent implements OnInit {
   @Input() expense!: ExpenseGenerationExpenseInterface;
   @Output() sendAmount = new EventEmitter<number>();
+  @Output() expenseSelectionChange = new EventEmitter<void>();
 
   overdue: boolean = false;
   status: boolean = false;
@@ -57,14 +58,14 @@ export class ExpenseGenerationCardComponent implements OnInit {
     if (!this.status) {
       this.expenses.addSelectedExpense(this.expense);
       this.sendAmount.emit(this.expense.actual_amount);
-      //  console.log(this.expenses.getSelectedExpenses());
-
       this.status = true;
     } else {
       this.expenses.removeSelectedExpense(this.expense.id);
       this.sendAmount.emit(-this.expense.actual_amount);
-      // console.log(this.expenses.getSelectedExpenses());
       this.status = false;
     }
+
+    // Emitir el cambio de selección
+    this.expenseSelectionChange.emit();
   }
 }
