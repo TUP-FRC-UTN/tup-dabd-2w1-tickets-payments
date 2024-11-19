@@ -58,7 +58,7 @@ El contador tendra una pantalla para ver en graficos los medios de pagos utiliza
 | Almeida Misael Ezequias     |
 | Davis Alexis Federico       |
 | Gomez Valore Eugenio        |
-| Golazo Federico Tomas       |
+| Colazo Federico Tomas       |
 | Olivera Agustin Ivan        |
 | Zunino Luca                 |
 
