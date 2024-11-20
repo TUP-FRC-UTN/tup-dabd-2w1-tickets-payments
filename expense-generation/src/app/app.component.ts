@@ -1,12 +1,11 @@
 import { Component } from '@angular/core';
 import { RouterModule, RouterOutlet } from '@angular/router';
-import { ExpenseGenerationViewComponent } from './expense-generation-view/expense-generation-view.component';
-import { routes } from './app.routes';
+import { UsersNavbarComponent } from './common/components/users-navbar/users-navbar.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, ExpenseGenerationViewComponent,RouterModule],
+  imports: [RouterOutlet, RouterModule, UsersNavbarComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
